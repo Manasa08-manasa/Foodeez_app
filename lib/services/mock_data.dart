@@ -289,8 +289,8 @@ const List<({String emoji, String name, String meta, bool ok})> docsList = [
 
 const List<({String emoji, String label, String sub})> supportChannels = [
   (emoji: '💬', label: 'Chat with us', sub: 'Avg reply under 2 min'),
-  (emoji: '📞', label: 'Call partner desk', sub: '1800-208-9900 · 24×7'),
-  (emoji: '✉️', label: 'Email support', sub: 'partners@foodeez.in'),
+//  (emoji: '📞', label: 'Call partner desk', sub: '1800-208-9900 · 24×7'),
+  (emoji: '✉️', label: 'Email support', sub: 'support@foodeez.in'),
 ];
 
 const List<({String q, String a})> supportFaqs = [

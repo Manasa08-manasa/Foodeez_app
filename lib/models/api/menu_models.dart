@@ -51,6 +51,16 @@ class ApiMenuItem {
 
   factory ApiMenuItem.fromJson(Map<String, dynamic> json) {
     final category = json['category'];
+    String categoryId = (json['categoryId'] ?? json['category_id'] ?? (category is Map ? category['id'] : null))
+            ?.toString() ??
+        '';
+    String categoryName = 'Menu';
+    if (category is Map) {
+      categoryName = (category['displayName'] ?? category['name'] ?? categoryName).toString();
+      categoryId = categoryId.isNotEmpty ? categoryId : (category['id']?.toString() ?? '');
+    } else if (json['categoryName'] != null) {
+      categoryName = json['categoryName'].toString();
+    }
     return ApiMenuItem(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -60,12 +70,8 @@ class ApiMenuItem {
       isVisible: _toBool(json['isVisible'], fallback: true),
       isInStock: _toBool(json['isInStock'], fallback: true),
       imageUrl: (json['imageUrl'] ?? json['image_url'])?.toString(),
-      categoryId: (json['categoryId'] ?? (category is Map ? category['id'] : null))?.toString() ?? '',
-      categoryName: (category is Map
-              ? (category['displayName'] ?? category['name'])
-              : json['categoryName'])
-          ?.toString() ??
-          'Menu',
+      categoryId: categoryId,
+      categoryName: categoryName,
       isVeg: json['isVeg'] is bool
           ? json['isVeg'] as bool
           : (json['veg'] is bool ? json['veg'] as bool : null),

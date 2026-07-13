@@ -91,10 +91,13 @@ class ApiMappers {
 
   static String apiIdOf(ApiOrder o) => o.id;
 
-  static MenuItem toUiMenuItem(ApiMenuItem item) {
+  static MenuItem toUiMenuItem(ApiMenuItem item, {String? sectionOverride}) {
+    final section = (sectionOverride != null && sectionOverride.isNotEmpty)
+        ? sectionOverride
+        : (item.categoryName.isNotEmpty ? item.categoryName : 'Menu');
     return MenuItem(
       id: item.id,
-      section: item.categoryName.isNotEmpty ? item.categoryName : 'Menu',
+      section: section,
       name: item.name,
       basePrice: item.price.round(),
       veg: item.isVeg ?? true,

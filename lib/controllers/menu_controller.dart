@@ -83,16 +83,49 @@ class MenuController extends ChangeNotifier {
     notifyListeners();
     try {
       final repo = ref.read(restaurantRepositoryProvider);
-      final apiItems = await repo.getMenuItems(branchId);
-      debugPrint('[Menu] branches/$branchId/menu-items → ${apiItems.length} item(s)');
 
-      // Always use API payload (including empty) — never keep Paradise mock.
-      items = apiItems.map<MenuItem>(ApiMappers.toUiMenuItem).toList();
-      final cats = <String>{};
-      for (final i in items) {
-        cats.add(i.section);
+      // Same pair restaurant-admin uses:
+      // GET /branches/{branchId}/menu-categories
+      // GET /branches/{branchId}/menu-items
+      final catsFut = repo.getCategories(branchId);
+      final itemsFut = repo.getMenuItems(branchId);
+      final categories = await catsFut;
+      final apiItems = await itemsFut;
+
+      debugPrint(
+        '[Menu] branches/$branchId/menu-categories → ${categories.length}; '
+        'menu-items → ${apiItems.length}',
+      );
+
+      final catLabelById = <String, String>{};
+      for (final c in categories) {
+        final label = c.displayName.isNotEmpty ? c.displayName : c.name;
+        if (c.id.isNotEmpty && label.isNotEmpty) {
+          catLabelById[c.id] = label;
+        }
       }
-      sectionOrder = cats.isNotEmpty ? cats.toList() : <String>['Menu'];
+
+      // Category chip / section order follows menu-categories API order.
+      final orderedSections = <String>[];
+      for (final c in categories) {
+        final label = catLabelById[c.id];
+        if (label != null && !orderedSections.contains(label)) {
+          orderedSections.add(label);
+        }
+      }
+
+      items = apiItems.map((api) {
+        final fromCat = catLabelById[api.categoryId];
+        final section = (fromCat != null && fromCat.isNotEmpty)
+            ? fromCat
+            : (api.categoryName.isNotEmpty ? api.categoryName : 'Menu');
+        if (!orderedSections.contains(section)) {
+          orderedSections.add(section);
+        }
+        return ApiMappers.toUiMenuItem(api, sectionOverride: section);
+      }).toList();
+
+      sectionOrder = orderedSections.isNotEmpty ? orderedSections : <String>['Menu'];
       priceOverrides.clear();
       availOverrides.clear();
       usingApi = true;
