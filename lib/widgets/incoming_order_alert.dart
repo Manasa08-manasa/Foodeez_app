@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/utils/order_status_utils.dart';
 import '../models/models.dart';
 import '../models/order_view.dart';
 import '../controllers/orders_controller.dart';
@@ -30,10 +31,14 @@ class _IncomingOrderAlertState extends ConsumerState<IncomingOrderAlert> with Si
   @override
   Widget build(BuildContext context) {
     final orders = ref.watch(ordersControllerProvider);
-    final incoming = orders.orders.where((o) => o.status == OrderStatus.incoming).toList();
+    final alertId = orders.alertOrderId;
+    final incoming = orders.orders.where((o) => OrderStatusUtils.isPlaced(orders.apiStatus(o.id))).toList();
     if (incoming.isEmpty) return const SizedBox.shrink();
-    final order = incoming.first;
-    final v = OrderView.of(order);
+    final order = alertId != null
+        ? orders.orderById(alertId) ?? incoming.first
+        : incoming.first;
+    if (order.status != OrderStatus.incoming && !OrderStatusUtils.isPlaced(orders.apiStatus(order.id))) return const SizedBox.shrink();
+    final v = OrderView.of(order, apiStatus: orders.apiStatus(order.id));
 
     return Positioned.fill(
       child: Container(

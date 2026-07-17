@@ -25,49 +25,48 @@ class DockNav extends ConsumerWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 15),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.30),
+            color: Colors.white.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(34),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-            boxShadow: [BoxShadow(color: AppColors.accentDeep.withValues(alpha: 0.12), blurRadius: 30, offset: const Offset(0, 12))],
+            border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
+            boxShadow: [BoxShadow(color: AppColors.accentDeep.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 12))],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          child:
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: _tabs.map((t) {
               final active = nav.activeTab == t.$1;
-              final color = active ? AppColors.accent.withValues(alpha: 0.92) : AppColors.lightGreyText.withValues(alpha: 0.72);
+              final color = active ? AppColors.accent.withValues(alpha: 0.86) : AppColors.lightGreyText.withValues(alpha: 0.6);
               final badge = t.$1 == 'orders' ? orders.newCount : 0;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => nav.tab(t.$1),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Column(
-                          children: [
-                            Icon(t.$3, color: color, size: 23),
-                            const SizedBox(height: 3),
-                            Text(t.$2, style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 10, fontWeight: FontWeight.w800, color: color)),
-                          ],
-                        ),
-                        if (badge > 0)
-                          Positioned(
-                            top: -2,
-                            right: 18,
-                            child: Container(
-                              constraints: const BoxConstraints(minWidth: 17),
-                              height: 17,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              decoration: BoxDecoration(color: AppColors.red, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white, width: 2)),
-                              alignment: Alignment.center,
-                              child: Text('$badge', style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
-                            ),
+              return GestureDetector(
+                onTap: () => nav.tab(t.$1),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Column(
+                        children: [
+                          Icon(t.$3, color: color, size: 23),
+                          const SizedBox(height: 3),
+                          Text(t.$2, style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+                        ],
+                      ),
+                      if (badge > 0)
+                        Positioned(
+                          top: -2,
+                          right: 18,
+                          child: Container(
+                            constraints: const BoxConstraints(minWidth: 17),
+                            height: 17,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(color: AppColors.red, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white, width: 2)),
+                            alignment: Alignment.center,
+                            child: Text('$badge', style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
                 ),
               );

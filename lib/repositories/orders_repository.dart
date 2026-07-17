@@ -26,6 +26,8 @@ class OrdersRepository {
   Future<List<ApiOrder>> getRestaurantOrders({
     String? status,
     String? search,
+    String? dateFrom,
+    String? dateTo,
     int page = 1,
     int limit = 50,
   }) async {
@@ -37,6 +39,8 @@ class OrdersRepository {
           'limit': limit,
           if (status != null && status.isNotEmpty) 'status': status,
           if (search != null && search.isNotEmpty) 'search': search,
+          if (dateFrom != null && dateFrom.isNotEmpty) 'dateFrom': dateFrom,
+          if (dateTo != null && dateTo.isNotEmpty) 'dateTo': dateTo,
         },
       );
       return unwrapList(res.data).whereType<Map>().map((e) => ApiOrder.fromJson(Map<String, dynamic>.from(e))).toList();
@@ -45,15 +49,39 @@ class OrdersRepository {
     }
   }
 
-  /// Home screen live pool:
-  /// GET /restaurant/orders?page=1&limit=20&status=PLACED,CONFIRMED,PREPARING,READY_FOR_PICKUP
-  Future<List<ApiOrder>> getHomeLiveOrders() {
+  /// Home / KDS live pool via partner endpoint.
+  Future<List<ApiOrder>> getPartnerActiveOrders() => getLiveOrders();
+
+  Future<List<ApiOrder>> getOngoingOrders() {
     return getRestaurantOrders(
-      page: AppConstants.homeLiveOrdersPage,
-      limit: AppConstants.homeLiveOrdersLimit,
-      status: AppConstants.homeLiveOrderStatuses,
+      page: AppConstants.ordersPage,
+      limit: AppConstants.ordersLimit,
+      status: AppConstants.ongoingOrderStatuses,
     );
   }
+
+  Future<List<ApiOrder>> getReadyOrders() {
+    return getRestaurantOrders(
+      page: AppConstants.ordersPage,
+      limit: AppConstants.ordersLimit,
+      status: AppConstants.readyOrderStatuses,
+    );
+  }
+
+  /// Completed orders — today only (for the Completed tab).
+  Future<List<ApiOrder>> getCompletedOrders() {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    return getRestaurantOrders(
+      page: AppConstants.ordersPage,
+      limit: AppConstants.historyOrdersLimit,
+      status: AppConstants.completedOrderStatuses,
+      dateFrom: startOfDay.toIso8601String(),
+    );
+  }
+
+  /// @deprecated Use [getPartnerActiveOrders] for live KDS pool.
+  Future<List<ApiOrder>> getHomeLiveOrders() => getPartnerActiveOrders();
 
   Future<ApiOrder> getOrder(String orderId) async {
     try {

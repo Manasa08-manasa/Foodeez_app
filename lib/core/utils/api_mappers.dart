@@ -83,7 +83,7 @@ class ApiMappers {
       customer: o.customerName?.isNotEmpty == true ? o.customerName! : 'Customer',
       dist: dist,
       placed: relativeTime(o.createdAt),
-      prepMinutes: o.prepTimeMinutes ?? 20,
+      prepMinutes: o.prepTimeMinutes ?? 15,
       payLabel: payBits.join(' · '),
       lines: lines,
     );

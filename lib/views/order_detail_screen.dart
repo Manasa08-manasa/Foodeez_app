@@ -4,6 +4,7 @@ import '../models/models.dart';
 import '../models/order_view.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/orders_controller.dart';
+import '../core/utils/order_status_utils.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -18,14 +19,17 @@ class OrderDetailScreen extends ConsumerWidget {
     if (order == null) {
       return SafeArea(child: Center(child: Text('Order not found', style: AppText.body(size: 14))));
     }
-    final v = OrderView.of(order);
+    final v = OrderView.of(order, apiStatus: orders.apiStatus(order.id));
     final tax = (order.total * 0.05).round();
     final grand = order.total + tax;
     final totalQty = order.lines.fold(0, (a, l) => a + l.qty);
     final custMeta = order.type == OrderType.dining ? 'Dine-in' : (order.dist.isNotEmpty ? '${order.dist} away · $totalQty items' : '$totalQty items');
     final showRider = (order.status == OrderStatus.ready || order.status == OrderStatus.outForDelivery) && order.type == OrderType.delivery;
     final riderMeta = order.status == OrderStatus.outForDelivery ? 'OTP verified · on the way to customer' : 'Arriving at your kitchen · 4 min';
-    final showFooter = order.status == OrderStatus.incoming || order.status == OrderStatus.preparing || order.status == OrderStatus.ready;
+    final apiStatus = orders.apiStatus(order.id);
+    final canMarkReady = orders.canMarkReady(order.id);
+    final showMarkReady = canMarkReady;
+    final showFooter = OrderStatusUtils.isPlaced(apiStatus) || showMarkReady;
 
     return SafeArea(
       child: Stack(
@@ -208,17 +212,6 @@ class OrderDetailScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 5),
                         Text('The rider closes this in their app once the customer receives it — it will then show as Delivered.', style: AppText.body(size: 11.5, color: const Color(0xFF5C6B78), height: 1.45)),
-                        const SizedBox(height: 11),
-                        GestureDetector(
-                          onTap: () => orders.advance(order.id),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 9),
-                            decoration: BoxDecoration(border: Border.all(color: const Color(0xFFA9CBEA), width: 1.5), borderRadius: BorderRadius.circular(11)),
-                            alignment: Alignment.center,
-                            child: Text('▸ Simulate: rider delivered', style: AppText.body(size: 12, weight: FontWeight.w700, color: AppColors.blue)),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -270,7 +263,7 @@ class OrderDetailScreen extends ConsumerWidget {
                             child: ElevatedButton(
                               onPressed: () => orders.advance(order.id),
                               style: ElevatedButton.styleFrom(backgroundColor: v.actionColor, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                              child: Text(v.actionLabel, style: AppText.body(size: 15, weight: FontWeight.w800, color: Colors.white)),
+                              child: Text('Mark ready', style: AppText.body(size: 15, weight: FontWeight.w800, color: Colors.white)),
                             ),
                           ),
                         ],

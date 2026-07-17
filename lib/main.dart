@@ -96,37 +96,46 @@ class AppShell extends ConsumerWidget {
 
     final screen = _screens[nav.screen] ?? const DashboardScreen();
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              layoutBuilder: (currentChild, previousChildren) {
-                final children = [...previousChildren];
-                if (currentChild != null) {
-                  children.add(currentChild);
-                }
-                return Stack(fit: StackFit.expand, children: children);
-              },
-              transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-              child: KeyedSubtree(key: ValueKey(nav.screen), child: screen),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          ref.read(navigationControllerProvider).back();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                layoutBuilder: (currentChild, previousChildren) {
+                  final children = [...previousChildren];
+                  if (currentChild != null) {
+                    children.add(currentChild);
+                  }
+                  return Stack(fit: StackFit.expand, children: children);
+                },
+                transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                child: KeyedSubtree(key: ValueKey(nav.screen), child: screen),
+              ),
             ),
-          ),
-          // Navigation header is rendered by individual screens using
-          // `ScreenHeader` / `BackCircleButton` to avoid duplicate buttons.
-          if (nav.showTabBar)
-            const Positioned(
-              left: 14,
-              right: 14,
-              bottom: 15,
-              child: DockNav(),
-            ),
-          if (orders.showAlert) const IncomingOrderAlert(),
-          if (orders.prepFor != null) const PrepTimePrompt(),
-          if (orders.kotFor != null) const KotModal(),
-        ],
+            // Navigation header is rendered by individual screens using
+            // `ScreenHeader` / `BackCircleButton` to avoid duplicate buttons.
+            if (nav.showTabBar)
+              Positioned(
+                left: 14,
+                right: 14,
+                // Sit above Android/iOS system nav (gesture bar / 3-button nav).
+                bottom: 12 + MediaQuery.viewPaddingOf(context).bottom,
+                child: const DockNav(),
+              ),
+            if (orders.showAlert) const IncomingOrderAlert(),
+            if (orders.prepFor != null) const PrepTimePrompt(),
+            if (orders.kotFor != null) const KotModal(),
+          ],
+        ),
       ),
     );
   }

@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/storage/token_storage.dart';
 import '../core/utils/api_mappers.dart';
+import '../core/utils/order_status_utils.dart';
 import '../models/api/order_models.dart';
 import '../models/models.dart';
-import '../models/order_view.dart';
 import '../repositories/orders_repository.dart';
-import '../services/mock_data.dart';
+import '../services/partner_orders_socket.dart';
 import 'auth_controller.dart';
 import 'navigation_controller.dart';
 
@@ -18,9 +19,6 @@ import 'navigation_controller.dart';
 /// prep-time confirmation, KOT modal, and today's counters.
 class OrdersController extends ChangeNotifier {
   OrdersController(this.ref) {
-    // ChangeNotifierProvider passes the same instance as prev/next, so
-    // prev.isAuthenticated == next.isAuthenticated after notifyListeners.
-    // Track auth ourselves and refresh whenever the session is ready.
     _authSub = ref.listen<AuthController>(authControllerProvider, (prev, next) {
       _onAuthChanged(next);
     });
@@ -28,26 +26,40 @@ class OrdersController extends ChangeNotifier {
   }
 
   final Ref ref;
+  final PartnerOrdersSocket _socket = PartnerOrdersSocket();
   ProviderSubscription<AuthController>? _authSub;
   NavigationController get _nav => ref.read(navigationControllerProvider);
   AuthController get _auth => ref.read(authControllerProvider);
 
   bool _wasAuthenticated = false;
   String? _lastRestaurantId;
+  bool _initialLoadDone = false;
+  final Set<String> _knownApiIds = {};
 
   bool online = true;
-  bool alertOpen = true;
-  int alertCountdown = 38;
+  bool alertOpen = false;
+  int alertCountdown = AppConstants.autoRejectSeconds;
+  String? _alertOrderId;
   Timer? _alertTimer;
   Timer? _pollTimer;
 
-  List<Order> orders = seedOrders();
-  /// Maps UI order id → API order id for mutations.
+  List<Order> orders = [];
   final Map<String, String> _apiIds = {};
-  /// Raw API status by UI order id (for correct next-status transitions).
   final Map<String, String> _apiStatuses = {};
+  final Map<String, String> _autoRejectAt = {};
+  final Map<String, DateTime> _createdAt = {};
 
-  int _poolIx = 0;
+  String? oid;
+  String? prepFor;
+  int prepChoice = AppConstants.defaultPrepMinutes;
+  String? kotFor;
+
+  String ordersTab = 'new';
+  String orderTypeFilter = 'all';
+
+  int doneToday = 0;
+  int gmvToday = 0;
+
   bool loading = false;
   String? error;
   bool usingApi = false;
@@ -62,46 +74,78 @@ class OrdersController extends ChangeNotifier {
       final sessionChanged = !_wasAuthenticated || rid != _lastRestaurantId;
       _wasAuthenticated = true;
       _lastRestaurantId = rid;
-      if (sessionChanged || _pollTimer == null) {
+      if (sessionChanged) {
+        _resetSession();
         refresh();
         _startPolling();
+        _connectSocket();
+      } else if (_pollTimer == null) {
+        refresh();
+        _startPolling();
+        _connectSocket();
       }
     } else if (_wasAuthenticated) {
       _wasAuthenticated = false;
       _lastRestaurantId = null;
-      _stopPolling();
-      alertOpen = false;
-      _alertTimer?.cancel();
-      _useMock();
+      _resetSession();
     }
   }
 
-  String? oid;
-  String? prepFor;
-  int prepChoice = 20;
-  String? kotFor;
-
-  String ordersTab = 'ongoing';
-  String orderTypeFilter = 'all';
-
-  int doneToday = 33;
-  int gmvToday = 11550;
+  void _resetSession() {
+    _stopPolling();
+    _socket.disconnect();
+    _alertTimer?.cancel();
+    alertOpen = false;
+    _alertOrderId = null;
+    _initialLoadDone = false;
+    _knownApiIds.clear();
+    orders = [];
+    _apiIds.clear();
+    _apiStatuses.clear();
+    _autoRejectAt.clear();
+    _createdAt.clear();
+    usingApi = false;
+    doneToday = 0;
+    gmvToday = 0;
+    notifyListeners();
+  }
 
   @override
   void dispose() {
     _alertTimer?.cancel();
     _pollTimer?.cancel();
+    _socket.disconnect();
     _authSub?.close();
     super.dispose();
   }
 
-  void _useMock() {
-    usingApi = false;
-    orders = seedOrders();
-    _apiIds.clear();
-    _apiStatuses.clear();
-    doneToday = 33;
-    gmvToday = 11550;
+  Future<void> _connectSocket() async {
+    final rid = _auth.restaurantId;
+    if (rid == null || rid.isEmpty) return;
+    final token = await TokenStorage.getToken();
+    if (token == null || token.isEmpty) return;
+
+    _socket.connect(
+      token: token,
+      restaurantId: rid,
+      onNewOrder: _onSocketNewOrder,
+      onOrderCancelled: _onSocketOrderCancelled,
+    );
+  }
+
+  void _onSocketNewOrder(ApiOrder api) {
+    _upsertApiOrder(api, isNew: true);
+    if (api.status.toUpperCase() == 'PLACED') {
+      _openAlertFor(api);
+    }
+    notifyListeners();
+  }
+
+  void _onSocketOrderCancelled(String apiOrderId) {
+    _removeByApiId(apiOrderId);
+    if (_alertOrderId != null && _apiIds[_alertOrderId] == apiOrderId) {
+      _dismissAlert();
+    }
     notifyListeners();
   }
 
@@ -126,78 +170,185 @@ class OrdersController extends ChangeNotifier {
     }
     try {
       final repo = ref.read(ordersRepositoryProvider);
-      List<ApiOrder> live = [];
+
+      var partnerActive = <ApiOrder>[];
+      var restaurantOngoing = <ApiOrder>[];
+      var ready = <ApiOrder>[];
+      var completed = <ApiOrder>[];
+
+      partnerActive = await repo.getPartnerActiveOrders();
+      debugPrint('[Orders] partner/orders → ${partnerActive.length} active');
+
       try {
-        live = await repo.getHomeLiveOrders();
-        debugPrint('[Orders] restaurant/orders (home live) → ${live.length} order(s)');
+        restaurantOngoing = await repo.getOngoingOrders();
+        debugPrint('[Orders] restaurant/orders (ongoing) → ${restaurantOngoing.length}');
       } catch (e) {
-        debugPrint('[Orders] home live orders failed, trying partner/orders: $e');
-        live = await repo.getLiveOrders();
-        debugPrint('[Orders] partner/orders → ${live.length} order(s)');
+        debugPrint('[Orders] ongoing fetch skipped: $e');
+      }
+      try {
+        ready = await repo.getReadyOrders();
+        debugPrint('[Orders] restaurant/orders (ready) → ${ready.length}');
+      } catch (e) {
+        debugPrint('[Orders] ready fetch skipped: $e');
+      }
+      try {
+        completed = await repo.getCompletedOrders();
+        debugPrint('[Orders] restaurant/orders (history) → ${completed.length}');
+      } catch (e) {
+        debugPrint('[Orders] history fetch skipped: $e');
       }
 
+      final merged = _mergeApiOrders([...partnerActive, ...restaurantOngoing, ...ready, ...completed]);
       final mapped = <Order>[];
       _apiIds.clear();
       _apiStatuses.clear();
-      for (final api in live) {
+      _autoRejectAt.clear();
+      _createdAt.clear();
+
+      for (final api in merged) {
         final ui = ApiMappers.toUiOrder(api);
         mapped.add(ui);
         _apiIds[ui.id] = api.id;
         _apiStatuses[ui.id] = api.status;
-      }
-
-      // Merge completed/cancelled from restaurant orders for the completed tab.
-      try {
-        final history = await repo.getRestaurantOrders(limit: 30);
-        for (final api in history) {
-          final status = api.status.toUpperCase();
-          if (!['DELIVERED', 'COMPLETED', 'CANCELLED', 'FAILED', 'REJECTED'].contains(status)) {
-            continue;
-          }
-          final ui = ApiMappers.toUiOrder(api);
-          if (mapped.any((o) => o.id == ui.id || _apiIds[o.id] == api.id)) continue;
-          mapped.add(ui);
-          _apiIds[ui.id] = api.id;
-          _apiStatuses[ui.id] = api.status;
+        _createdAt[ui.id] = api.createdAt;
+        if (api.autoRejectAt != null && api.autoRejectAt!.isNotEmpty) {
+          _autoRejectAt[ui.id] = api.autoRejectAt!;
         }
-      } catch (e) {
-        debugPrint('[Orders] history merge skipped: $e');
       }
 
-      // Always replace mock with API result (including empty).
+      if (_initialLoadDone) {
+        for (final api in merged) {
+          if (!OrderStatusUtils.isPlaced(api.status)) continue;
+          if (_knownApiIds.contains(api.id)) continue;
+          _openAlertFor(api);
+        }
+      } else {
+        for (final api in merged) {
+          _knownApiIds.add(api.id);
+        }
+        _initialLoadDone = true;
+      }
+
+      for (final api in merged) {
+        _knownApiIds.add(api.id);
+      }
+
       orders = mapped;
       usingApi = true;
       online = _auth.isOnline;
       error = null;
 
-      // Settlement counters
       try {
         final summary = await repo.getSettlementToday();
         doneToday = summary.orderCount;
         gmvToday = summary.totalItemValue.round();
       } catch (_) {}
 
-      final hasIncoming = orders.any((o) => o.status == OrderStatus.incoming);
-      if (hasIncoming && !alertOpen && _nav.screen != 'login') {
-        alertOpen = true;
-        alertCountdown = 38;
-        _startAlertCountdown();
-      } else if (!hasIncoming) {
-        alertOpen = false;
-        _alertTimer?.cancel();
+      if (!orders.any((o) => OrderStatusUtils.isPlaced(_apiStatuses[o.id]))) {
+        _dismissAlert();
       }
     } catch (e) {
       debugPrint('[Orders] refresh failed: $e');
       error = e.toString();
-      // Keep last good API data; only seed mock if we never loaded API.
-      if (!usingApi) _useMock();
     } finally {
       loading = false;
       notifyListeners();
     }
   }
 
+  List<ApiOrder> _mergeApiOrders(List<ApiOrder> list) {
+    final byId = <String, ApiOrder>{};
+    for (final o in list) {
+      final existing = byId[o.id];
+      if (existing == null || OrderStatusUtils.rank(o.status) >= OrderStatusUtils.rank(existing.status)) {
+        byId[o.id] = o;
+      }
+    }
+    return byId.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  void _upsertApiOrder(ApiOrder api, {bool isNew = false}) {
+    final ui = ApiMappers.toUiOrder(api);
+    _apiIds[ui.id] = api.id;
+    _apiStatuses[ui.id] = api.status;
+    _createdAt[ui.id] = api.createdAt;
+    if (api.autoRejectAt != null && api.autoRejectAt!.isNotEmpty) {
+      _autoRejectAt[ui.id] = api.autoRejectAt!;
+    }
+    final ix = orders.indexWhere((o) => _apiIds[o.id] == api.id || o.id == ui.id);
+    if (ix >= 0) {
+      orders = [...orders]..[ix] = ui;
+    } else {
+      orders = [ui, ...orders];
+    }
+    _knownApiIds.add(api.id);
+    if (isNew) debugPrint('[Orders] new order via socket: ${api.orderNumber}');
+  }
+
+  void _removeByApiId(String apiOrderId) {
+    String? uiId;
+    for (final e in _apiIds.entries) {
+      if (e.value == apiOrderId) {
+        uiId = e.key;
+        break;
+      }
+    }
+    if (uiId == null) return;
+    orders = orders.where((o) => o.id != uiId).toList();
+    _apiIds.remove(uiId);
+    _apiStatuses.remove(uiId);
+    _autoRejectAt.remove(uiId);
+    _createdAt.remove(uiId);
+    _knownApiIds.remove(apiOrderId);
+  }
+
+  void _openAlertFor(ApiOrder api) {
+    final ui = ApiMappers.toUiOrder(api);
+    _alertOrderId = ui.id;
+    alertOpen = true;
+    alertCountdown = _secondsUntilAutoReject(ui.id);
+    _startAlertCountdown();
+  }
+
+  int _secondsUntilAutoReject(String uiId) {
+    final raw = _autoRejectAt[uiId];
+    if (raw != null) {
+      final at = DateTime.tryParse(raw);
+      if (at != null) {
+        return at.difference(DateTime.now()).inSeconds.clamp(0, AppConstants.autoRejectSeconds);
+      }
+    }
+    return AppConstants.autoRejectSeconds;
+  }
+
+  void _dismissAlert() {
+    alertOpen = false;
+    _alertOrderId = null;
+    _alertTimer?.cancel();
+  }
+
+  void _startAlertCountdown() {
+    _alertTimer?.cancel();
+    _alertTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!alertOpen || _alertOrderId == null) {
+        t.cancel();
+        return;
+      }
+      alertCountdown = _secondsUntilAutoReject(_alertOrderId!);
+      if (alertCountdown <= 0) {
+        t.cancel();
+        _dismissAlert();
+      }
+      notifyListeners();
+    });
+  }
+
   String _apiId(String uiId) => _apiIds[uiId] ?? uiId;
+
+  String? apiStatus(String uiId) => _apiStatuses[uiId];
+
+  bool canMarkReady(String uiId) => OrderStatusUtils.canPartnerMarkReady(_apiStatuses[uiId]);
 
   void openOrder(String id) {
     oid = id;
@@ -212,21 +363,38 @@ class OrdersController extends ChangeNotifier {
     return null;
   }
 
-  List<Order> get liveOrders =>
-      orders.where((o) => o.status == OrderStatus.incoming || o.status == OrderStatus.preparing || o.status == OrderStatus.ready).toList();
+  bool _isToday(String uiId) {
+    final dt = _createdAt[uiId];
+    if (dt == null) return true;
+    final now = DateTime.now();
+    final local = dt.toLocal();
+    return local.year == now.year && local.month == now.month && local.day == now.day;
+  }
 
-  int get newCount => orders.where((o) => o.status == OrderStatus.incoming).length;
-  int get prepCount => orders.where((o) => o.status == OrderStatus.preparing).length;
-  int get readyCount => orders.where((o) => o.status == OrderStatus.ready || o.status == OrderStatus.outForDelivery).length;
-  int get todayOrdersCount => orders.where((o) => o.status != OrderStatus.incoming).length;
+  List<Order> get liveOrders => orders.where((o) {
+        final raw = _apiStatuses[o.id];
+        return OrderStatusUtils.isOngoing(raw) || OrderStatusUtils.isReady(raw);
+      }).toList();
+
+  int get newCount => orders.where((o) => OrderStatusUtils.isPlaced(_apiStatuses[o.id])).length;
+  int get prepCount => orders.where((o) => OrderStatusUtils.isPreparing(_apiStatuses[o.id])).length;
+  int get readyCount => orders.where((o) => OrderStatusUtils.isReady(_apiStatuses[o.id])).length;
+  int get completedCount =>
+      orders.where((o) => OrderStatusUtils.isCompleted(_apiStatuses[o.id]) && _isToday(o.id)).length;
+  int get todayOrdersCount => orders.where((o) => !OrderStatusUtils.isPlaced(_apiStatuses[o.id])).length;
 
   List<Order> tabOrders(String tab) {
-    bool Function(Order) filter = switch (tab) {
-      'ready' => (o) => o.status == OrderStatus.ready || o.status == OrderStatus.outForDelivery,
-      'completed' => (o) => o.status == OrderStatus.completed,
-      _ => (o) => o.status == OrderStatus.incoming || o.status == OrderStatus.preparing,
-    };
-    return orders.where(filter).where((o) => orderTypeFilter == 'all' || o.type == orderTypeFilter).toList();
+    bool matchesTab(Order o) {
+      final raw = _apiStatuses[o.id];
+      return switch (tab) {
+        'new' => OrderStatusUtils.isPlaced(raw),
+        'preparing' => OrderStatusUtils.isPreparing(raw),
+        'outForDelivery' => OrderStatusUtils.isReady(raw),
+        'completed' => OrderStatusUtils.isCompleted(raw) && _isToday(o.id),
+        _ => OrderStatusUtils.isOngoing(raw),
+      };
+    }
+    return orders.where(matchesTab).where((o) => orderTypeFilter == 'all' || o.type == orderTypeFilter).toList();
   }
 
   void setOrdersTab(String t) => _set(() => ordersTab = t);
@@ -251,46 +419,21 @@ class OrdersController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _setStatus(String id, OrderStatus status) {
-    final prev = orderById(id);
-    final wasCompleted = prev?.status == OrderStatus.completed;
-    orders = orders
-        .map((o) => o.id == id ? o.copyWith(status: status, placed: status == OrderStatus.preparing ? 'Just now' : o.placed) : o)
-        .toList();
-    if (status == OrderStatus.completed && !wasCompleted) {
-      final amt = prev?.total ?? 350;
-      doneToday += 1;
-      gmvToday += amt;
-    }
-  }
-
   Future<void> advance(String id) async {
     final o = orderById(id);
-    if (o == null) return;
-
-    if (!usingApi) {
-      final next = nextStatus(o);
-      if (next != null) _setStatus(id, next);
-      notifyListeners();
-      return;
-    }
+    if (o == null || !usingApi) return;
 
     final repo = ref.read(ordersRepositoryProvider);
     final apiId = _apiId(id);
+
     try {
-      if (o.status == OrderStatus.preparing) {
-        await repo.markReady(apiId);
-        _setStatus(id, OrderStatus.ready);
-        _apiStatuses[id] = 'READY';
-      } else if (o.status == OrderStatus.ready) {
-        await repo.updateStatus(apiId, o.type == OrderType.delivery ? 'PICKED_UP' : 'DELIVERED');
-        _setStatus(id, o.type == OrderType.delivery ? OrderStatus.outForDelivery : OrderStatus.completed);
-      } else if (o.status == OrderStatus.outForDelivery) {
-        await repo.updateStatus(apiId, 'DELIVERED');
-        _setStatus(id, OrderStatus.completed);
-      } else if (o.status == OrderStatus.incoming) {
+      if (OrderStatusUtils.isPlaced(_apiStatuses[id])) {
         askPrep(id);
         return;
+      }
+      if (OrderStatusUtils.isOngoing(_apiStatuses[id]) && canMarkReady(id)) {
+        final updated = await repo.markReady(apiId);
+        _upsertApiOrder(updated);
       }
     } catch (e) {
       error = e.toString();
@@ -299,109 +442,93 @@ class OrdersController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> reject(String id) async {
+  Future<void> reject(String id, {String? reason}) async {
     if (usingApi) {
       try {
-        await ref.read(ordersRepositoryProvider).rejectOrder(_apiId(id));
+        await ref.read(ordersRepositoryProvider).rejectOrder(_apiId(id), reason: reason);
       } catch (e) {
         error = e.toString();
         notifyListeners();
         return;
       }
     }
+    final apiId = _apiId(id);
     orders = orders.where((o) => o.id != id).toList();
     _apiIds.remove(id);
     _apiStatuses.remove(id);
-    alertOpen = false;
-    _alertTimer?.cancel();
+    _autoRejectAt.remove(id);
+    _knownApiIds.remove(apiId);
+    if (_alertOrderId == id) _dismissAlert();
     if (_nav.screen == 'detail') _nav.tab('orders');
     notifyListeners();
   }
 
   void acceptAlert() {
-    final inc = orders.where((o) => o.status == OrderStatus.incoming).toList();
+    final inc = orders.where((o) => OrderStatusUtils.isPlaced(_apiStatuses[o.id])).toList();
     if (inc.isNotEmpty) {
       askPrep(inc.first.id);
     } else {
-      alertOpen = false;
+      _dismissAlert();
       notifyListeners();
     }
   }
 
   void rejectAlert() {
-    final inc = orders.where((o) => o.status == OrderStatus.incoming).toList();
+    final inc = orders.where((o) => OrderStatusUtils.isPlaced(_apiStatuses[o.id])).toList();
     if (inc.isNotEmpty) reject(inc.first.id);
   }
 
   void askPrep(String id) {
     final o = orderById(id);
     prepFor = id;
-    prepChoice = o?.prepMinutes ?? 20;
-    alertOpen = false;
-    _alertTimer?.cancel();
+    prepChoice = o?.prepMinutes ?? AppConstants.defaultPrepMinutes;
+    if (prepChoice < AppConstants.minPrepMinutes || prepChoice > AppConstants.maxPrepMinutes) {
+      prepChoice = AppConstants.defaultPrepMinutes;
+    }
+    _dismissAlert();
     notifyListeners();
   }
 
   Future<void> confirmPrep() async {
     final id = prepFor;
-    final mins = prepChoice;
+    final mins = prepChoice.clamp(AppConstants.minPrepMinutes, AppConstants.maxPrepMinutes);
     if (id == null) return;
 
     if (usingApi) {
       try {
-        await ref.read(ordersRepositoryProvider).acceptOrder(_apiId(id), mins);
-        _apiStatuses[id] = 'ACCEPTED';
+        final updated = await ref.read(ordersRepositoryProvider).acceptOrder(_apiId(id), mins);
+        _upsertApiOrder(updated);
       } catch (e) {
         error = e.toString();
         notifyListeners();
         return;
       }
+    } else {
+      orders = orders
+          .map((o) => o.id == id ? o.copyWith(status: OrderStatus.preparing, prepMinutes: mins, placed: 'Just now') : o)
+          .toList();
+      _apiStatuses[id] = 'ACCEPTED';
     }
 
-    orders = orders
-        .map((o) => o.id == id ? o.copyWith(status: OrderStatus.preparing, prepMinutes: mins, placed: 'Just now') : o)
-        .toList();
     prepFor = null;
     notifyListeners();
   }
 
   void cancelPrep() => _set(() => prepFor = null);
-  void bumpPrep(int delta) => _set(() => prepChoice = (prepChoice + delta).clamp(1, 90));
+  void setPrepChoice(int mins) => _set(() => prepChoice = mins.clamp(AppConstants.minPrepMinutes, AppConstants.maxPrepMinutes));
+  void bumpPrep(int delta) => _set(() => prepChoice = (prepChoice + delta).clamp(AppConstants.minPrepMinutes, AppConstants.maxPrepMinutes));
   void openKot(String id) => _set(() => kotFor = id);
   void closeKot() => _set(() => kotFor = null);
 
-  Future<void> simulate() async {
-    if (_auth.isAuthenticated) {
-      await refresh();
-      return;
-    }
-    final t = simulationPool[_poolIx % simulationPool.length];
-    _poolIx++;
-    final id = 'FZ${8843 + _poolIx}';
-    orders = [
-      Order(id: id, status: OrderStatus.incoming, type: t.type, customer: t.customer, dist: t.dist, placed: 'Just now', prepMinutes: t.prepMinutes, payLabel: t.payLabel, lines: t.lines),
-      ...orders,
-    ];
-    online = true;
-    alertOpen = true;
-    alertCountdown = 38;
-    _startAlertCountdown();
-    notifyListeners();
-  }
+  bool get showAlert =>
+      _auth.isAuthenticated &&
+      online &&
+      alertOpen &&
+      alertOrderId != null &&
+      orders.any((o) => o.id == alertOrderId && OrderStatusUtils.isPlaced(_apiStatuses[o.id])) &&
+      _nav.screen != 'login';
 
-  void _startAlertCountdown() {
-    _alertTimer?.cancel();
-    _alertTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (alertCountdown <= 0 || !alertOpen) {
-        t.cancel();
-        return;
-      }
-      alertCountdown -= 1;
-      notifyListeners();
-    });
-  }
-
-  bool get showAlert => _auth.isAuthenticated && online && alertOpen && orders.any((o) => o.status == OrderStatus.incoming) && _nav.screen != 'login';
+  String? get alertOrderId => _alertOrderId;
 }
 
 final ordersControllerProvider = ChangeNotifierProvider<OrdersController>((ref) => OrdersController(ref));

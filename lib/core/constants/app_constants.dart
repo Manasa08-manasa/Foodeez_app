@@ -12,10 +12,37 @@ class AppConstants {
   static const int defaultPageSize = 20;
   static const Duration ordersPollInterval = Duration(seconds: 15);
 
-  /// Live orders shown on Home — matches restaurant KDS query.
-  static const String homeLiveOrderStatuses = 'PLACED,CONFIRMED,PREPARING,READY_FOR_PICKUP';
-  static const int homeLiveOrdersPage = 1;
-  static const int homeLiveOrdersLimit = 20;
+  /// Partner KDS kitchen pool (GET /partner/orders).
+  static const String partnerActiveStatuses = 'PLACED,ACCEPTED,PREPARING';
+
+  /// Restaurant-admin ongoing pool — catches CONFIRMED orders not in partner API.
+  static const String ongoingOrderStatuses = 'PLACED,ACCEPTED,CONFIRMED,PREPARING';
+
+  /// Ready / out-for-delivery pool (GET /restaurant/orders).
+  static const String readyOrderStatuses = 'READY,READY_FOR_PICKUP,PICKED_UP,ON_THE_WAY';
+
+  /// Completed / terminal orders for history tab.
+  static const String completedOrderStatuses = 'DELIVERED,CANCELLED,REJECTED,FAILED';
+
+  static const int ordersPage = 1;
+  static const int ordersLimit = 20;
+  static const int historyOrdersLimit = 30;
+
+  /// Backend auto-rejects PLACED orders after 180 seconds.
+  static const int autoRejectSeconds = 180;
+
+  /// Prep time presets (minutes) — matches web KDS.
+  static const List<int> prepTimePresets = [10, 15, 20, 30, 45, 60];
+  static const int defaultPrepMinutes = 15;
+  static const int minPrepMinutes = 1;
+  static const int maxPrepMinutes = 120;
+
+  static String get wsOrigin {
+    final base = Env.apiBaseUrl.replaceAll(RegExp(r'/api/v1/?$'), '');
+    return base;
+  }
+
+  static const String partnerOrdersLiveSocket = '/ws/partner/orders/live';
 
   static const String roleRestaurantAdmin = 'restaurant_admin';
   static const String roleRestaurantOwner = 'restaurant_owner';

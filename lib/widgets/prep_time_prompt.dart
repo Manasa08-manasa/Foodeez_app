@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/constants/app_constants.dart';
 import '../models/order_view.dart';
 import '../controllers/orders_controller.dart';
 import '../utils/theme.dart';
@@ -34,6 +35,37 @@ class PrepTimePrompt extends ConsumerWidget {
                   '#${order.id} · ${v.typeLine}\nWe combine this with rider & delivery time for the customer\'s ETA.',
                   textAlign: TextAlign.center,
                   style: AppText.body(size: 12.5, color: AppColors.bodyGrey, height: 1.45),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: AppConstants.prepTimePresets
+                      .map(
+                        (m) => GestureDetector(
+                          onTap: () => orders.setPrepChoice(m),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: orders.prepChoice == m ? AppColors.accent : Colors.white,
+                              border: Border.all(color: orders.prepChoice == m ? AppColors.accent : AppColors.inputBorder),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${m}m',
+                              style: AppText.body(
+                                size: 12.5,
+                                weight: FontWeight.w700,
+                                color: orders.prepChoice == m ? Colors.white : AppColors.bodyGrey,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               Padding(

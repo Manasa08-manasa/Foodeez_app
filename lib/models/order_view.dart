@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models.dart';
+import '../core/utils/order_status_utils.dart';
 import '../utils/theme.dart';
 import '../utils/utils.dart';
 
@@ -42,20 +43,22 @@ class OrderView {
     required this.totalStr,
   });
 
-  factory OrderView.of(Order o) {
+  factory OrderView.of(Order o, {String? apiStatus}) {
+    final label = apiStatus != null ? OrderStatusUtils.displayLabel(apiStatus) : null;
     final meta = _statusMeta(o.status);
     final completedLabel = o.type == OrderType.delivery ? 'DELIVERED' : (o.type == OrderType.dining ? 'SERVED' : 'PICKED UP');
-    final act = _actionMeta(o.status, o.type);
+    final act = _actionMeta(o.status, o.type, apiStatus: apiStatus);
+    final raw = OrderStatusUtils.norm(apiStatus);
     return OrderView._(
       order: o,
-      statusLabel: o.status == OrderStatus.completed ? completedLabel : meta.label,
+      statusLabel: o.status == OrderStatus.completed ? completedLabel : (label ?? meta.label),
       statusFg: meta.fg,
       statusBg: meta.bg,
       actionLabel: act?.label ?? '',
       actionColor: act?.color ?? AppColors.bodyGrey,
-      isIncoming: o.status == OrderStatus.incoming,
-      hasAdvance: o.status == OrderStatus.preparing || o.status == OrderStatus.ready,
-      isOutForDelivery: o.status == OrderStatus.outForDelivery,
+      isIncoming: OrderStatusUtils.isPlaced(apiStatus) || o.status == OrderStatus.incoming,
+      hasAdvance: OrderStatusUtils.canPartnerMarkReady(apiStatus),
+      isOutForDelivery: raw == 'PICKED_UP' || raw == 'ON_THE_WAY' || o.status == OrderStatus.outForDelivery,
       showOtp: o.status == OrderStatus.ready && o.type == OrderType.delivery,
       otp: otpFor(o.id),
       etaStr: etaStrFor(o),
@@ -88,15 +91,20 @@ class _ActionMeta {
   const _ActionMeta(this.label, this.color);
 }
 
-_ActionMeta? _actionMeta(OrderStatus s, String type) => switch (s) {
+_ActionMeta? _actionMeta(OrderStatus s, String type, {String? apiStatus}) {
+  if (OrderStatusUtils.canPartnerMarkReady(apiStatus)) {
+    return const _ActionMeta('Mark ready', AppColors.green);
+  }
+  return switch (s) {
       OrderStatus.incoming => const _ActionMeta('Accept', AppColors.green),
-      OrderStatus.preparing => const _ActionMeta('Mark ready', AppColors.green),
+      OrderStatus.preparing => null,
       OrderStatus.ready => _ActionMeta(
           type == OrderType.delivery ? 'Hand to rider' : (type == OrderType.dining ? 'Mark served' : 'Mark picked up'),
           AppColors.accent,
         ),
       _ => null,
     };
+}
 
 /// The next status an order moves to when its action button is tapped.
 OrderStatus? nextStatus(Order o) => switch (o.status) {

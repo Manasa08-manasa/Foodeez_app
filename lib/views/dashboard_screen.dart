@@ -169,19 +169,17 @@ class DashboardScreen extends ConsumerWidget {
                         style: AppText.body(size: 12.5, color: AppColors.bodyGrey),
                       ),
                       const SizedBox(height: 14),
-                      GestureDetector(
-                        onTap: orders.loading ? null : orders.simulate,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(11)),
-                          child: Text(
-                            orders.loading
-                                ? 'Loading orders…'
-                                : (orders.usingApi ? 'Refresh live orders' : 'Simulate a new order'),
-                            style: AppText.body(size: 12.5, weight: FontWeight.w800, color: Colors.white),
+                      if (orders.loading)
+                        Text('Loading orders…', style: AppText.body(size: 12.5, weight: FontWeight.w700, color: AppColors.bodyGrey))
+                      else
+                        GestureDetector(
+                          onTap: () => orders.refresh(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                            decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(11)),
+                            child: Text('Refresh orders', style: AppText.body(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -246,7 +244,7 @@ class _LiveOrderCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final orders = ref.read(ordersControllerProvider);
-    final v = OrderView.of(order);
+    final v = OrderView.of(order, apiStatus: orders.apiStatus(order.id));
     return GestureDetector(
       onTap: () => orders.openOrder(order.id),
       child: Container(
@@ -273,7 +271,13 @@ class _LiveOrderCard extends ConsumerWidget {
               children: [
                 Text('${v.totalStr} · ${order.type}', style: AppText.body(size: 13, weight: FontWeight.w700)),
                 GestureDetector(
-                  onTap: () => v.isIncoming ? orders.askPrep(order.id) : orders.advance(order.id),
+                  onTap: () {
+                    if (v.isIncoming) {
+                      orders.askPrep(order.id);
+                    } else if (orders.canMarkReady(order.id)) {
+                      orders.advance(order.id);
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                     decoration: BoxDecoration(color: v.actionColor, borderRadius: BorderRadius.circular(10)),

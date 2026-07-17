@@ -15,8 +15,8 @@ class OrdersScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
-  static const _tabs = ['ongoing', 'ready', 'completed'];
-  static const _tabLabels = ['Ongoing', 'Ready', 'History'];
+  static const _tabs = ['new', 'preparing', 'outForDelivery', 'completed'];
+  static const _tabLabels = ['New', 'Preparing', 'Out for delivery', 'Completed'];
   static const _typeChips = [
     ('all', 'All'),
     (OrderType.delivery, 'Delivery'),
@@ -52,29 +52,29 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Track incoming, ready, and completed orders in one place.', style: AppText.body(size: 13.5, color: AppColors.bodyGrey)),
-                const SizedBox(height: 10),
-                SegmentedPills(
-                  labels: _tabLabels,
-                  counts: [orders.newCount + orders.prepCount, orders.readyCount, 0],
-                  selectedIndex: selectedTabIx < 0 ? 0 : selectedTabIx,
-                  onSelect: (i) => orders.setOrdersTab(_tabs[i]),
-                ),
               ],
             ),
           ),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              children: _typeChips
-                  .map((c) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FzChip(label: c.$2, selected: orders.orderTypeFilter == c.$1, onTap: () => orders.setOrderTypeFilter(c.$1)),
-                      ))
-                  .toList(),
-            ),
+          ScrollableTabPills(
+            labels: _tabLabels,
+            counts: [orders.newCount, orders.prepCount, orders.readyCount, orders.completedCount],
+            selectedIndex: selectedTabIx < 0 ? 0 : selectedTabIx,
+            onSelect: (i) => orders.setOrdersTab(_tabs[i]),
           ),
+          const SizedBox(height: 10),
+          // SizedBox(
+          //   height: 40,
+          //   child: ListView(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+          //     scrollDirection: Axis.horizontal,
+          //     children: _typeChips
+          //         .map((c) => Padding(
+          //               padding: const EdgeInsets.only(right: 8),
+          //               child: FzChip(label: c.$2, selected: orders.orderTypeFilter == c.$1, onTap: () => orders.setOrderTypeFilter(c.$1)),
+          //             ))
+          //         .toList(),
+          //   ),
+          // ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => ref.read(ordersControllerProvider).refresh(),
@@ -93,9 +93,13 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                                 Text('Nothing here yet', style: AppText.body(size: 15, weight: FontWeight.w700)),
                                 const SizedBox(height: 4),
                                 Text(
-                                  orders.ordersTab == 'ready'
-                                      ? 'Orders marked ready will show here.'
-                                      : (orders.ordersTab == 'completed' ? 'Completed orders will appear here.' : 'New and preparing orders will show here.'),
+                                  switch (orders.ordersTab) {
+                                    'new' => 'New incoming orders will show here.',
+                                    'preparing' => 'Accepted orders being prepared will show here.',
+                                    'outForDelivery' => 'Orders marked ready or out with a rider will show here.',
+                                    'completed' => 'Orders completed today will appear here.',
+                                    _ => 'Orders will show here.',
+                                  },
                                   textAlign: TextAlign.center,
                                   style: AppText.body(size: 12.5, color: AppColors.bodyGrey),
                                 ),
@@ -125,7 +129,7 @@ class _OrderCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final orders = ref.read(ordersControllerProvider);
-    final v = OrderView.of(order);
+    final v = OrderView.of(order, apiStatus: orders.apiStatus(order.id));
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,

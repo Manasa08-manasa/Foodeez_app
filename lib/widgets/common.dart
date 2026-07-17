@@ -91,6 +91,88 @@ class ScreenHeader extends StatelessWidget {
   }
 }
 
+/// Horizontally scrollable status tabs — each pill sizes to its label.
+class ScrollableTabPills extends StatelessWidget {
+  final List<String> labels;
+  final List<int>? counts;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const ScrollableTabPills({
+    super.key,
+    required this.labels,
+    required this.selectedIndex,
+    required this.onSelect,
+    this.counts,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: labels.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final selected = i == selectedIndex;
+          final count = counts != null ? counts![i] : 0;
+          return GestureDetector(
+            onTap: () => onSelect(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.accent : Colors.white,
+                border: Border.all(color: selected ? AppColors.accent : AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: selected
+                    ? [BoxShadow(color: AppColors.accent.withValues(alpha: 0.22), blurRadius: 8, offset: const Offset(0, 2))]
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    labels[i],
+                    style: AppText.body(
+                      size: 13,
+                      weight: FontWeight.w800,
+                      color: selected ? Colors.white : AppColors.bodyGrey,
+                    ),
+                  ),
+                  if (count > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      height: 18,
+                      constraints: const BoxConstraints(minWidth: 18),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: selected ? Colors.white.withValues(alpha: 0.25) : AppColors.neutralTint,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: AppText.body(
+                          size: 11,
+                          weight: FontWeight.w800,
+                          color: selected ? Colors.white : AppColors.accent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 /// A pill-style segmented control (Ongoing/Ready/History, Today/Week/Month, etc).
 class SegmentedPills extends StatelessWidget {
   final List<String> labels;

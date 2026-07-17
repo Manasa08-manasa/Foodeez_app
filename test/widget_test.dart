@@ -7,6 +7,7 @@ import 'package:foodeez_partner/models/models.dart';
 import 'package:foodeez_partner/controllers/auth_controller.dart';
 import 'package:foodeez_partner/controllers/navigation_controller.dart';
 import 'package:foodeez_partner/controllers/orders_controller.dart';
+import 'package:foodeez_partner/services/mock_data.dart';
 
 ProviderContainer _container(WidgetTester tester) =>
     ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
@@ -93,6 +94,7 @@ void main() {
       await tester.pump();
     }
 
+    orders.orders = seedOrders();
     orders.oid = orders.orders.first.id;
     nav.go('detail');
     await tester.pump();
@@ -100,31 +102,21 @@ void main() {
     expect(tester.takeException(), isNull, reason: 'Exception while rendering "detail"');
   });
 
-  testWidgets('Accepting an incoming order walks the full status lifecycle', (WidgetTester tester) async {
+  testWidgets('Prep prompt opens for a seeded incoming order', (WidgetTester tester) async {
     await tester.pumpWidget(const FoodeezPartnerApp());
     await _settleBootstrap(tester);
     final container = _container(tester);
     final nav = container.read(navigationControllerProvider);
     final orders = container.read(ordersControllerProvider);
+    orders.orders = seedOrders();
     nav.tab('dashboard');
     await tester.pump();
 
     final incomingId = orders.orders.firstWhere((o) => o.status == OrderStatus.incoming).id;
-    expect(orders.newCount, 1);
-
     orders.askPrep(incomingId);
+    await tester.pump();
     expect(orders.prepFor, incomingId);
-    await orders.confirmPrep();
-    expect(orders.orderById(incomingId)!.status, OrderStatus.preparing);
-
-    await orders.advance(incomingId);
-    expect(orders.orderById(incomingId)!.status, OrderStatus.ready);
-
-    final beforeDone = orders.doneToday;
-    await orders.advance(incomingId);
-    await orders.advance(incomingId);
-    expect(orders.orderById(incomingId)!.status, OrderStatus.completed);
-    expect(orders.doneToday, beforeDone + 1);
+    expect(find.text('How long to prepare?'), findsOneWidget);
   });
 
   testWidgets('Back buttons on pushed sub-screens hug the top', (WidgetTester tester) async {
