@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// `Component` state machine — a screen stack for push/pop flows, plus a
 /// "tab reset" mode for the 5 bottom-dock destinations.
 class NavigationController extends ChangeNotifier {
-  List<String> stack = ['login'];
+  List<String> stack = ['splash'];
   String get screen => stack.last;
 
   void go(String s) {
@@ -42,7 +42,7 @@ class NavigationController extends ChangeNotifier {
   }
 
   static const _hideTabScreens = {
-    'login', 'detail', 'support', 'hours', 'earnings', 'offers', 'reviews',
+    'splash', 'login', 'register', 'detail', 'support', 'hours', 'earnings', 'offers', 'reviews',
     'address', 'fssai', 'bookings', 'subscription', 'newCoupon',
   };
 

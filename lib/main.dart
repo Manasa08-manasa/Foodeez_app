@@ -9,6 +9,7 @@ import 'widgets/incoming_order_alert.dart';
 import 'widgets/kot_modal.dart';
 import 'widgets/prep_time_prompt.dart';
 
+import 'views/splash_screen.dart';
 import 'views/login_screen.dart';
 import 'views/dashboard_screen.dart';
 import 'views/orders_screen.dart';
@@ -26,6 +27,7 @@ import 'views/support_screen.dart';
 import 'views/address_screen.dart';
 import 'views/fssai_screen.dart';
 import 'views/bookings_screen.dart';
+import 'views/register_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +60,9 @@ class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
   static const _screens = {
+    'splash': SplashScreen(),
     'login': LoginScreen(),
+    'register': RegisterScreen(),
     'dashboard': DashboardScreen(),
     'orders': OrdersScreen(),
     'detail': OrderDetailScreen(),
@@ -99,14 +103,19 @@ class AppShell extends ConsumerWidget {
           Positioned.fill(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
-              layoutBuilder: (currentChild, previousChildren) => Stack(
-                fit: StackFit.expand,
-                children: [...previousChildren, if (currentChild != null) currentChild],
-              ),
+              layoutBuilder: (currentChild, previousChildren) {
+                final children = [...previousChildren];
+                if (currentChild != null) {
+                  children.add(currentChild);
+                }
+                return Stack(fit: StackFit.expand, children: children);
+              },
               transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
               child: KeyedSubtree(key: ValueKey(nav.screen), child: screen),
             ),
           ),
+          // Navigation header is rendered by individual screens using
+          // `ScreenHeader` / `BackCircleButton` to avoid duplicate buttons.
           if (nav.showTabBar)
             const Positioned(
               left: 14,

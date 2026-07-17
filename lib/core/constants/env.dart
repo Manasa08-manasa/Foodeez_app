@@ -1,10 +1,10 @@
 /// Runtime configuration via `--dart-define` (optional).
 ///
-/// Plain `flutter run` uses these defaults — no flags required.
-///
-/// Live restaurant-admin API:
+/// Default (production):
 ///   https://int.foodeez.in/restaurant/api/v1
-///   e.g. POST …/auth/login
+///
+/// Local dev:
+///   `--dart-define=API_BASE_URL=http://localhost:3001/api/v1`
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -29,5 +29,13 @@ class Env {
   static const String googleMapsApiKey = String.fromEnvironment(
     'GOOGLE_MAPS_API_KEY',
     defaultValue: 'AIzaSyDW9niCHIcWO0h096PG7ES8MMw8o9cliAU',
+  );
+
+  /// Razorpay **key_id** only — safe for client apps. Never put key_secret here.
+  /// Server create-order may also return keyId; this is the fallback.
+  /// Override: `--dart-define=RAZORPAY_KEY_ID=rzp_live_...`
+  static const String razorpayKeyId = String.fromEnvironment(
+    'RAZORPAY_KEY_ID',
+    defaultValue: 'rzp_live_T5p40dPxB7KUEL',
   );
 }

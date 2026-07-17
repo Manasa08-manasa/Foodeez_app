@@ -44,6 +44,31 @@ void main() {
     expect(find.text('Live orders'), findsOneWidget);
   });
 
+  testWidgets('Register screen renders the multi-step registration form', (WidgetTester tester) async {
+    await tester.pumpWidget(const FoodeezPartnerApp());
+    await _settleBootstrap(tester);
+
+    final container = _container(tester);
+    container.read(navigationControllerProvider).go('register');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Register Restaurant'), findsOneWidget);
+    expect(find.text('Step 1 of 3'), findsOneWidget);
+  });
+
+  testWidgets('Register screen shows a back navigation control', (WidgetTester tester) async {
+    await tester.pumpWidget(const FoodeezPartnerApp());
+    await _settleBootstrap(tester);
+
+    final container = _container(tester);
+    container.read(navigationControllerProvider).go('register');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byIcon(Icons.arrow_back_ios_new), findsOneWidget);
+  });
+
   testWidgets('Every screen renders without layout exceptions', (WidgetTester tester) async {
     await tester.pumpWidget(const FoodeezPartnerApp());
     await _settleBootstrap(tester);

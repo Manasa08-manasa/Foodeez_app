@@ -25,11 +25,12 @@ class SubscriptionScreen extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ScreenHeader(title: 'Subscription', onBack: nav.back),
+            const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
               margin: const EdgeInsets.only(bottom: 14),

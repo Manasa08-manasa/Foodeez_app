@@ -31,7 +31,12 @@ final dioProvider = Provider<Dio>((ref) {
         // credentials, not an expired token.
         final isAuthCall = path.contains('/auth/login') ||
             path.contains('/auth/partner/login') ||
-            path.contains('/auth/password-reset');
+            path.contains('/auth/password-reset') ||
+            path.contains('/partner/request-otp') ||
+            path.contains('/partner/send-otp') ||
+            path.contains('/partner/verify-otp') ||
+            path.contains('/partner/register-step1') ||
+            path.contains('/partner/register/step1');
         if (status == 401 && !isAuthCall) {
           debugPrint('[Dio] 401 → clearing token ($path)');
           await TokenStorage.clearToken();

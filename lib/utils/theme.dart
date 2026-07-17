@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Foodeez Partner brand palette — hex values sourced verbatim from the design prototype.
+/// Foodeez Partner brand palette — primary brand green `#103A2B`.
 class AppColors {
   AppColors._();
 
-  static const accent = Color(0xFF6E2A4D);
-  static const accentLight = Color(0xFF8A3A66);
-  static const accentDeep = Color(0xFF4E1D37);
-  static const accentDeep2 = Color(0xFF7A2E56);
+  static const accent = Color(0xFF103A2B);
+  static const accentLight = Color(0xFF1A5C44);
+  static const accentDeep = Color(0xFF0A281E);
+  static const accentDeep2 = Color(0xFF145C44);
 
   static const gold = Color(0xFFC9A227);
   static const goldDark = Color(0xFF9C7614);
@@ -54,13 +54,14 @@ class AppColors {
   static const surfaceWarm = Color(0xFFF7F4F0);
   static const neutralTint = Color(0xFFEDE7E2);
   static const neutralTint2 = Color(0xFFF1ECE8);
-  static const neutralTint3 = Color(0xFFEDE7F1);
+  static const neutralTint3 = Color(0xFFE8F0EC);
 
-  static const maroonTint = Color(0xFFF6EEF3);
-  static const maroonTintBorder = Color(0xFFE8D3E0);
-  static const rowPressTint = Color(0xFFFAF5F8);
+  /// Soft brand tint (formerly maroon) — pale green for `#103A2B`.
+  static const maroonTint = Color(0xFFE8F2EE);
+  static const maroonTintBorder = Color(0xFFC5D9D0);
+  static const rowPressTint = Color(0xFFF0F7F4);
 
-  static const onboardingGradTop = Color(0xFFFCF6EE);
+  static const onboardingGradTop = Color(0xFFEEF5F1);
 
   static const heroGradient = LinearGradient(
     begin: Alignment.topLeft,

@@ -12,6 +12,11 @@ class AppConstants {
   static const int defaultPageSize = 20;
   static const Duration ordersPollInterval = Duration(seconds: 15);
 
+  /// Live orders shown on Home — matches restaurant KDS query.
+  static const String homeLiveOrderStatuses = 'PLACED,CONFIRMED,PREPARING,READY_FOR_PICKUP';
+  static const int homeLiveOrdersPage = 1;
+  static const int homeLiveOrdersLimit = 20;
+
   static const String roleRestaurantAdmin = 'restaurant_admin';
   static const String roleRestaurantOwner = 'restaurant_owner';
   static const String roleRestaurantManager = 'restaurant_manager';
@@ -69,4 +74,27 @@ class ApiEndpoints {
   static const String notificationsUnread = '/notifications/unread-count';
   static String notificationRead(String id) => '/notifications/$id/read';
   static const String notificationsReadAll = '/notifications/read-all';
+
+  // Partner self-registration (OTP → step1 → step2 → step3)
+  static const String partnerRequestOtp = '/partner/request-otp';
+  static const String partnerSendOtp = '/partner/send-otp';
+  static const String partnerVerifyOtp = '/partner/verify-otp';
+  static const String partnerRegisterStep1 = '/partner/register-step1';
+  static String partnerRegisterStep2(String restaurantId) =>
+      '/partner/register-step2/$restaurantId';
+  static String partnerRegisterStep3(String restaurantId) =>
+      '/partner/register-step3/$restaurantId';
+
+  static const String createRestaurant = '/restaurants';
+  static const String registrationPricing = '/restaurants/register/pricing';
+  static const String verifyPan = '/restaurants/verify-pan';
+  static const String menuScan = '/menu-scan';
+  static String registrationDocuments(String restaurantId) =>
+      '/restaurants/$restaurantId/documents/registration';
+  static String registrationCoverPhoto(String restaurantId) =>
+      '/restaurants/$restaurantId/register/step3/cover-photo';
+  static String registrationPaymentCreateOrder(String restaurantId) =>
+      '/restaurants/$restaurantId/register/payment/create-order';
+  static String registrationPaymentVerify(String restaurantId) =>
+      '/restaurants/$restaurantId/register/payment/verify';
 }

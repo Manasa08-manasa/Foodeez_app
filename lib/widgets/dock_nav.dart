@@ -12,7 +12,7 @@ class DockNav extends ConsumerWidget {
     ('dashboard', 'Home', Icons.home_outlined),
     ('orders', 'Orders', Icons.receipt_long_outlined),
     ('menu', 'Menu', Icons.restaurant_menu_outlined),
-    ('insights', 'Insights', Icons.bar_chart_rounded),
+    ('insights', 'Insights', Icons.bar_chart_outlined),
     ('settings', 'More', Icons.settings_outlined),
   ];
 
@@ -27,16 +27,16 @@ class DockNav extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
+            color: Colors.white.withValues(alpha: 0.30),
             borderRadius: BorderRadius.circular(34),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-            boxShadow: [BoxShadow(color: AppColors.accentDeep.withValues(alpha: 0.4), blurRadius: 30, offset: const Offset(0, 12))],
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+            boxShadow: [BoxShadow(color: AppColors.accentDeep.withValues(alpha: 0.12), blurRadius: 30, offset: const Offset(0, 12))],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: _tabs.map((t) {
               final active = nav.activeTab == t.$1;
-              final color = active ? AppColors.accent : AppColors.lightGreyText;
+              final color = active ? AppColors.accent.withValues(alpha: 0.92) : AppColors.lightGreyText.withValues(alpha: 0.72);
               final badge = t.$1 == 'orders' ? orders.newCount : 0;
               return Expanded(
                 child: GestureDetector(

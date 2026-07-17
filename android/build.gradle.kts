@@ -17,6 +17,16 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+
+    if (project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.library")) {
+        project.extensions.configure<com.android.build.gradle.BaseExtension>("android") {
+            compileSdkVersion(36)
+            defaultConfig {
+                minSdkVersion(21)
+                targetSdkVersion(36)
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

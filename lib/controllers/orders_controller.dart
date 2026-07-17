@@ -70,6 +70,8 @@ class OrdersController extends ChangeNotifier {
       _wasAuthenticated = false;
       _lastRestaurantId = null;
       _stopPolling();
+      alertOpen = false;
+      _alertTimer?.cancel();
       _useMock();
     }
   }
@@ -125,36 +127,19 @@ class OrdersController extends ChangeNotifier {
     try {
       final repo = ref.read(ordersRepositoryProvider);
       List<ApiOrder> live = [];
-      var usedPartnerEndpoint = false;
       try {
-        live = await repo.getLiveOrders();
-        usedPartnerEndpoint = true;
-        debugPrint('[Orders] partner/orders → ${live.length} order(s)');
+        live = await repo.getHomeLiveOrders();
+        debugPrint('[Orders] restaurant/orders (home live) → ${live.length} order(s)');
       } catch (e) {
-        debugPrint('[Orders] partner/orders failed, falling back to restaurant/orders: $e');
-        live = await repo.getRestaurantOrders(limit: 50);
-        debugPrint('[Orders] restaurant/orders → ${live.length} order(s)');
+        debugPrint('[Orders] home live orders failed, trying partner/orders: $e');
+        live = await repo.getLiveOrders();
+        debugPrint('[Orders] partner/orders → ${live.length} order(s)');
       }
-
-      // KDS-style live set: active kitchen statuses (+ ready/in-transit).
-      const liveStatuses = {
-        'PLACED',
-        'ACCEPTED',
-        'CONFIRMED',
-        'PREPARING',
-        'READY',
-        'READY_FOR_PICKUP',
-        'PICKED_UP',
-        'ON_THE_WAY',
-      };
-      final liveFiltered = usedPartnerEndpoint
-          ? live // partner endpoint already returns the live pool
-          : live.where((o) => liveStatuses.contains(o.status.toUpperCase())).toList();
 
       final mapped = <Order>[];
       _apiIds.clear();
       _apiStatuses.clear();
-      for (final api in liveFiltered) {
+      for (final api in live) {
         final ui = ApiMappers.toUiOrder(api);
         mapped.add(ui);
         _apiIds[ui.id] = api.id;
@@ -385,9 +370,9 @@ class OrdersController extends ChangeNotifier {
   void openKot(String id) => _set(() => kotFor = id);
   void closeKot() => _set(() => kotFor = null);
 
-  void simulate() {
-    if (usingApi) {
-      refresh();
+  Future<void> simulate() async {
+    if (_auth.isAuthenticated) {
+      await refresh();
       return;
     }
     final t = simulationPool[_poolIx % simulationPool.length];
@@ -416,7 +401,7 @@ class OrdersController extends ChangeNotifier {
     });
   }
 
-  bool get showAlert => online && alertOpen && orders.any((o) => o.status == OrderStatus.incoming) && _nav.screen != 'login';
+  bool get showAlert => _auth.isAuthenticated && online && alertOpen && orders.any((o) => o.status == OrderStatus.incoming) && _nav.screen != 'login';
 }
 
 final ordersControllerProvider = ChangeNotifierProvider<OrdersController>((ref) => OrdersController(ref));

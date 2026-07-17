@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/models.dart';
 import '../controllers/menu_controller.dart';
+import '../controllers/navigation_controller.dart';
+import '../models/models.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -18,21 +19,19 @@ class MenuScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Consumer(
+            builder: (context, ref, child) {
+              final nav = ref.read(navigationControllerProvider);
+              return ScreenHeader(
+                title: 'Menu',
+                onBack: nav.back,
+                trailing: Text('+ Add item', style: AppText.body(size: 12.5, weight: FontWeight.w700, color: AppColors.accent)),
+              );
+            },
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Menu', style: AppText.display(size: 20)),
-                    Text('+ Add item', style: AppText.body(size: 12.5, weight: FontWeight.w700, color: AppColors.accent)),
-                  ],
-                ),
-                Text('${menu.menuAvailableCount} items available · tap price to edit', style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
-              ],
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text('${menu.menuAvailableCount} items available · tap price to edit', style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
           ),
           SizedBox(
             height: 40,

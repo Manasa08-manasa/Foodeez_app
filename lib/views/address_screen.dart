@@ -40,7 +40,7 @@ class AddressScreen extends ConsumerWidget {
       if (branch?.latitude != null && branch?.longitude != null) {
         lines.add((
           label: 'COORDINATES',
-          value: '${branch!.latitude!.toStringAsFixed(2)}° N, ${branch.longitude!.toStringAsFixed(2)}° E',
+          value: '${branch!.latitude!.toStringAsFixed(6)} , ${branch.longitude!.toStringAsFixed(6)}',
         ));
       }
     }
@@ -50,9 +50,10 @@ class AddressScreen extends ConsumerWidget {
     final lng = branch?.longitude;
     final hasCoords = lat != null && lng != null && lat != 0 && lng != 0;
     final target = hasCoords ? LatLng(lat, lng) : _fallback;
+    final initialCamera = CameraPosition(target: target, zoom: 15);
     final pinLabel = hasCoords
-        ? '${branch?.city ?? 'Outlet'} · ${lat.toStringAsFixed(2)}° N, ${lng.toStringAsFixed(2)}° E'
-        : 'Banjara Hills · 17.41° N, 78.44° E';
+        ? '${branch?.city ?? 'Outlet'} · ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}'
+        : 'Banjara Hills · 17.41, 78.44';
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -72,7 +73,7 @@ class AddressScreen extends ConsumerWidget {
                 children: [
                   Positioned.fill(
                     child: GoogleMap(
-                      initialCameraPosition: CameraPosition(target: target, zoom: 15),
+                      initialCameraPosition: initialCamera,
                       markers: {
                         Marker(
                           markerId: const MarkerId('outlet'),
@@ -80,17 +81,19 @@ class AddressScreen extends ConsumerWidget {
                           infoWindow: InfoWindow(title: auth.displayName),
                         ),
                       },
-                      myLocationButtonEnabled: false,
-                      zoomControlsEnabled: false,
-                      mapToolbarEnabled: false,
-                      compassEnabled: false,
-                      liteModeEnabled: !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
+                      myLocationButtonEnabled: true,
+                      zoomControlsEnabled: true,
+                      mapToolbarEnabled: true,
+                      compassEnabled: true,
+                      liteModeEnabled: false,
                       gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
                         Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
                       },
-                      onMapCreated: (_) {
-                        // Key is also registered natively; Env keeps a single source for Dart usage.
+                      onMapCreated: (mapController) async {
                         assert(Env.googleMapsApiKey.isNotEmpty);
+                        if (hasCoords) {
+                          await mapController.animateCamera(CameraUpdate.newLatLngZoom(target, 16));
+                        }
                       },
                     ),
                   ),

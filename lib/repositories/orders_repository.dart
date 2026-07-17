@@ -45,6 +45,16 @@ class OrdersRepository {
     }
   }
 
+  /// Home screen live pool:
+  /// GET /restaurant/orders?page=1&limit=20&status=PLACED,CONFIRMED,PREPARING,READY_FOR_PICKUP
+  Future<List<ApiOrder>> getHomeLiveOrders() {
+    return getRestaurantOrders(
+      page: AppConstants.homeLiveOrdersPage,
+      limit: AppConstants.homeLiveOrdersLimit,
+      status: AppConstants.homeLiveOrderStatuses,
+    );
+  }
+
   Future<ApiOrder> getOrder(String orderId) async {
     try {
       final res = await _dio.get(ApiEndpoints.restaurantOrder(orderId));

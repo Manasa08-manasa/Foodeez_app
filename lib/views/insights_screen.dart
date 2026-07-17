@@ -1,29 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controllers/navigation_controller.dart';
 import '../services/mock_data.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
-class InsightsScreen extends StatelessWidget {
+class InsightsScreen extends ConsumerWidget {
   const InsightsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nav = ref.read(navigationControllerProvider);
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Insights', style: AppText.display(size: 20)),
-                  Text('Last 7 days', style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
-                ],
-              ),
-            ),
+            ScreenHeader(title: 'Insights', onBack: nav.back),
+            const SizedBox(height: 10),
+            Text('Last 7 days', style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
+
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -73,7 +70,7 @@ class InsightsScreen extends StatelessWidget {
                                     child: FractionallySizedBox(
                                       heightFactor: salesByDayPct[i] / 100,
                                       widthFactor: 1,
-                                      child: Container(decoration: BoxDecoration(color: isToday ? AppColors.accent : const Color(0xFFE6C7DA), borderRadius: const BorderRadius.vertical(top: Radius.circular(7)))),
+                                      child: Container(decoration: BoxDecoration(color: isToday ? AppColors.accent : const Color(0xFFB8D4C8), borderRadius: const BorderRadius.vertical(top: Radius.circular(7)))),
                                     ),
                                   ),
                                 ),

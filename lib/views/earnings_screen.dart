@@ -23,11 +23,12 @@ class EarningsScreen extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ScreenHeader(title: 'Earnings', onBack: nav.back),
+            const SizedBox(height: 10),
             SegmentedPills(labels: _periodLabels, selectedIndex: _periods.indexOf(earningsCtrl.earnPeriod), onSelect: (i) => earningsCtrl.setEarnPeriod(_periods[i])),
             const SizedBox(height: 14),
             Container(
@@ -69,7 +70,7 @@ class EarningsScreen extends ConsumerWidget {
                       Text(moneyFmt(d.saved), style: AppText.display(size: 24, color: AppColors.green)),
                     ],
                   ),
-                  const Text('📈', style: TextStyle(fontSize: 26)),
+                  const Icon(Icons.show_chart_outlined, size: 26, color: AppColors.green),
                 ],
               ),
             ),
@@ -81,7 +82,7 @@ class EarningsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.cardBorder), borderRadius: BorderRadius.circular(16)),
                 child: Row(
                   children: [
-                    Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.maroonTint, borderRadius: BorderRadius.circular(12)), alignment: Alignment.center, child: const Text('💳', style: TextStyle(fontSize: 18))),
+                    Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.maroonTint, borderRadius: BorderRadius.circular(12)), alignment: Alignment.center, child: const Icon(Icons.credit_card_outlined, size: 18, color: Colors.white)),
                     const SizedBox(width: 13),
                     Expanded(
                       child: Column(

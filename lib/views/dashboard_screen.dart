@@ -148,24 +148,42 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 11),
             if (live.isEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-                decoration: BoxDecoration(border: Border.all(color: AppColors.inputBorder, style: BorderStyle.solid), borderRadius: BorderRadius.circular(16)),
-                child: Column(
-                  children: [
-                    Text('No live orders', style: AppText.body(size: 14, weight: FontWeight.w700)),
-                    const SizedBox(height: 3),
-                    Text('New orders appear here instantly.', style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
-                    const SizedBox(height: 14),
-                    GestureDetector(
-                      onTap: orders.simulate,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                        decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(11)),
-                        child: Text('Simulate a new order', style: AppText.body(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
+              SizedBox(
+                width: double.infinity,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text('No live orders', style: AppText.body(size: 14, weight: FontWeight.w700)),
+                      const SizedBox(height: 3),
+                      Text(
+                        'New orders appear here instantly.',
+                        textAlign: TextAlign.center,
+                        style: AppText.body(size: 12.5, color: AppColors.bodyGrey),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 14),
+                      GestureDetector(
+                        onTap: orders.loading ? null : orders.simulate,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(11)),
+                          child: Text(
+                            orders.loading
+                                ? 'Loading orders…'
+                                : (orders.usingApi ? 'Refresh live orders' : 'Simulate a new order'),
+                            style: AppText.body(size: 12.5, weight: FontWeight.w800, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
@@ -176,21 +194,22 @@ class DashboardScreen extends ConsumerWidget {
             Text('Manage', style: AppText.display(size: 16)),
             const SizedBox(height: 12),
             GridView.count(
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.92,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 3.2,
               children: [
-                _QuickAction(label: 'Menu', emoji: '🍽️', tint: AppColors.maroonTint, onTap: () => nav.tab('menu')),
-                _QuickAction(label: 'Bookings', emoji: '📅', tint: AppColors.bluePaleBg2, onTap: () => nav.go('bookings')),
-                _QuickAction(label: 'Offers', emoji: '🎁', tint: AppColors.amberPaleBg, onTap: nav.toOffers),
-                _QuickAction(label: 'Plan', emoji: '💳', tint: AppColors.neutralTint3, onTap: nav.toSubscription),
-                _QuickAction(label: 'Earnings', emoji: '💰', tint: AppColors.greenPaleBg2, onTap: nav.toEarnings),
-                _QuickAction(label: 'Reviews', emoji: '⭐', tint: AppColors.starPaleBg, onTap: nav.toReviews),
-                _QuickAction(label: 'Insights', emoji: '📊', tint: AppColors.neutralTint3, onTap: () => nav.tab('insights')),
-                _QuickAction(label: 'Settings', emoji: '⚙️', tint: AppColors.cardBorder, onTap: nav.toSettings),
+                
+                _QuickAction(label: 'Menu', icon: const Icon(Icons.restaurant_menu_outlined, size: 18, color: AppColors.accent), tint: AppColors.maroonTint, onTap: () => nav.tab('menu')),
+                _QuickAction(label: 'Bookings', icon: const Icon(Icons.calendar_month_outlined, size: 18, color: AppColors.accent), tint: AppColors.bluePaleBg2, onTap: () => nav.go('bookings')),
+                _QuickAction(label: 'Offers', icon: const Icon(Icons.local_offer_outlined, size: 18, color: AppColors.accent), tint: AppColors.amberPaleBg, onTap: nav.toOffers),
+                _QuickAction(label: 'Plan', icon: const Icon(Icons.credit_card_outlined, size: 18, color: AppColors.accent), tint: AppColors.neutralTint3, onTap: nav.toSubscription),
+                _QuickAction(label: 'Earnings', icon: const Icon(Icons.account_balance_wallet_outlined, size: 18, color: AppColors.accent), tint: AppColors.greenPaleBg2, onTap: nav.toEarnings),
+                _QuickAction(label: 'Reviews', icon: const Icon(Icons.star_outline, size: 18, color: AppColors.accent), tint: AppColors.starPaleBg, onTap: nav.toReviews),
+                _QuickAction(label: 'Insights', icon: const Icon(Icons.bar_chart_outlined, size: 18, color: AppColors.accent), tint: AppColors.neutralTint3, onTap: () => nav.tab('insights')),
+                _QuickAction(label: 'Settings', icon: const Icon(Icons.settings_outlined, size: 18, color: AppColors.accent), tint: AppColors.cardBorder, onTap: nav.toSettings),
               ],
             ),
           ],
@@ -272,30 +291,37 @@ class _LiveOrderCard extends ConsumerWidget {
 
 class _QuickAction extends StatelessWidget {
   final String label;
-  final String emoji;
+  final Widget icon;
   final Color tint;
   final VoidCallback? onTap;
-  const _QuickAction({required this.label, required this.emoji, required this.tint, required this.onTap});
+  const _QuickAction({required this.label, required this.icon, required this.tint, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.cardBorder), borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(12)),
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(11)),
               alignment: Alignment.center,
-              child: Text(emoji, style: const TextStyle(fontSize: 20)),
+              child: icon,
             ),
-            const SizedBox(height: 8),
-            Text(label, style: AppText.body(size: 12, weight: FontWeight.w700)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.body(size: 13, weight: FontWeight.w700),
+              ),
+            ),
           ],
         ),
       ),

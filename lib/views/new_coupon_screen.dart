@@ -9,11 +9,11 @@ import '../widgets/common.dart';
 class NewCouponScreen extends ConsumerWidget {
   const NewCouponScreen({super.key});
 
-  static const _types = [
-    ('flat', 'Flat ₹ off', '₹'),
-    ('percent', '% off', '%'),
-    ('freedelivery', 'Free delivery', '🛵'),
-    ('freeitem', 'Free item', '🎁'),
+  static const List<(String key, String label, IconData icon, String suffix)> _types = [
+    ('flat', 'Flat ₹ off', Icons.currency_rupee, '₹'),
+    ('percent', '% off', Icons.percent_outlined, '%'),
+    ('freedelivery', 'Free delivery', Icons.delivery_dining_outlined, '🛵'),
+    ('freeitem', 'Free item', Icons.card_giftcard_outlined, '🎁'),
   ];
 
   @override
@@ -71,17 +71,18 @@ class NewCouponScreen extends ConsumerWidget {
                   crossAxisSpacing: 10,
                   childAspectRatio: 3.2,
                   children: _types.map((t) {
-                    final selected = offersCtrl.couponType == t.$1;
+                    final (key, label, icon, suffix) = t;
+                    final selected = offersCtrl.couponType == key;
                     return GestureDetector(
-                      onTap: () => offersCtrl.pickCouponType(t.$1),
+                      onTap: () => offersCtrl.pickCouponType(key),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                         decoration: BoxDecoration(color: selected ? AppColors.accent : Colors.white, border: Border.all(color: selected ? AppColors.accent : AppColors.chipBorder, width: 1.5), borderRadius: BorderRadius.circular(14)),
                         child: Row(
                           children: [
-                            Text(t.$3, style: AppText.body(size: 15, weight: FontWeight.w800, color: selected ? AppColors.goldBright : AppColors.accent)),
+                            Icon(icon, size: 18, color: selected ? AppColors.goldBright : AppColors.accent),
                             const SizedBox(width: 9),
-                            Text(t.$2, style: AppText.body(size: 12.5, weight: FontWeight.w800, color: selected ? Colors.white : AppColors.midGrey)),
+                            Text(label, style: AppText.body(size: 12.5, weight: FontWeight.w800, color: selected ? Colors.white : AppColors.midGrey)),
                           ],
                         ),
                       ),
@@ -121,7 +122,7 @@ class NewCouponScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: AppColors.greenPaleBg2, border: Border.all(color: AppColors.greenPaleBorder), borderRadius: BorderRadius.circular(14)),
                     child: Row(
                       children: [
-                        const Text('🛵', style: TextStyle(fontSize: 18)),
+                        const Icon(Icons.delivery_dining_outlined, size: 18, color: AppColors.greenDark),
                         const SizedBox(width: 11),
                         Expanded(child: Text('Delivery fee is waived for the customer. Foodeez still pays the rider — you pay ₹0.', style: AppText.body(size: 12, weight: FontWeight.w600, color: AppColors.greenDark, height: 1.45))),
                       ],
@@ -182,7 +183,7 @@ class NewCouponScreen extends ConsumerWidget {
                   decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.chipBorder, width: 1.5), borderRadius: BorderRadius.circular(14)),
                   child: Row(
                     children: [
-                      const Text('🥇', style: TextStyle(fontSize: 17)),
+                      const Icon(Icons.emoji_events_outlined, size: 17, color: AppColors.accent),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

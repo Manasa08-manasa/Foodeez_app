@@ -111,22 +111,35 @@ class ApiBranch {
     this.isOnline = false,
   });
 
-  factory ApiBranch.fromJson(Map<String, dynamic> json) => ApiBranch(
-        id: json['id']?.toString() ?? '',
-        restaurantId: json['restaurantId']?.toString() ??
-            (json['restaurant'] is Map ? json['restaurant']['id']?.toString() : null) ??
-            '',
-        name: json['name']?.toString() ?? '',
-        address: json['address']?.toString(),
-        city: json['city']?.toString(),
-        state: json['state']?.toString(),
-        zipCode: json['zipCode']?.toString(),
-        openingTime: json['openingTime']?.toString(),
-        closingTime: json['closingTime']?.toString(),
-        latitude: _toDouble(json['latitude']),
-        longitude: _toDouble(json['longitude']),
-        isOnline: _toBool(json['isOnline']),
-      );
+  factory ApiBranch.fromJson(Map<String, dynamic> json) {
+    final location = json['location'];
+    final coords = location is Map ? location['coordinates'] : null;
+    final fallbackLat = _pickCoordinate(json, ['latitude', 'lat', 'Latitude', 'Lat']);
+    final fallbackLng = _pickCoordinate(json, ['longitude', 'lng', 'Longitude', 'Lng']);
+    final locLat = _pickCoordinate(location, ['latitude', 'lat', 'Latitude', 'Lat']);
+    final locLng = _pickCoordinate(location, ['longitude', 'lng', 'Longitude', 'Lng']);
+
+    final listCoords = coords is List ? coords : null;
+    final listLat = listCoords != null && listCoords.length > 1 ? _toDouble(listCoords[1]) : null;
+    final listLng = listCoords != null && listCoords.length > 0 ? _toDouble(listCoords[0]) : null;
+
+    return ApiBranch(
+      id: json['id']?.toString() ?? '',
+      restaurantId: json['restaurantId']?.toString() ??
+          (json['restaurant'] is Map ? json['restaurant']['id']?.toString() : null) ??
+          '',
+      name: json['name']?.toString() ?? '',
+      address: json['address']?.toString(),
+      city: json['city']?.toString(),
+      state: json['state']?.toString(),
+      zipCode: json['zipCode']?.toString(),
+      openingTime: json['openingTime']?.toString(),
+      closingTime: json['closingTime']?.toString(),
+      latitude: listLat ?? locLat ?? fallbackLat,
+      longitude: listLng ?? locLng ?? fallbackLng,
+      isOnline: _toBool(json['isOnline']),
+    );
+  }
 
   ApiBranch copyWith({bool? isOnline, String? openingTime, String? closingTime}) => ApiBranch(
         id: id,
@@ -163,6 +176,16 @@ double? _toDouble(dynamic value) {
   if (value == null) return null;
   if (value is num) return value.toDouble();
   return double.tryParse(value.toString());
+}
+
+double? _pickCoordinate(dynamic source, List<String> keys) {
+  if (source is! Map) return null;
+  for (final key in keys) {
+    final value = source[key];
+    final parsed = _toDouble(value);
+    if (parsed != null) return parsed;
+  }
+  return null;
 }
 
 bool _toBool(dynamic value) {

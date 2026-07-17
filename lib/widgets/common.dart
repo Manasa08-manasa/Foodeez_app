@@ -61,23 +61,30 @@ class BackCircleButton extends StatelessWidget {
   }
 }
 
-/// Standard pushed-screen header: back button + title, optional trailing widget.
+/// Standard pushed-screen header: title and optional trailing widget.
+/// `onBack` is kept for compatibility with existing screens, but the actual
+/// back button is rendered globally by `main.dart` to avoid duplicates.
 class ScreenHeader extends StatelessWidget {
   final String title;
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
   final Widget? trailing;
-  const ScreenHeader({super.key, required this.title, required this.onBack, this.trailing});
+  const ScreenHeader({super.key, required this.title, this.onBack, this.trailing});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Row(
         children: [
-          BackCircleButton(onTap: onBack),
-          const SizedBox(width: 12),
+          if (onBack != null) ...[
+            BackCircleButton(onTap: onBack!),
+            const SizedBox(width: 10),
+          ],
           Expanded(child: Text(title, style: AppText.display(size: 18))),
-          if (trailing != null) trailing!,
+          if (trailing != null) ...[
+            const SizedBox(width: 10),
+            trailing!,
+          ],
         ],
       ),
     );
@@ -290,7 +297,7 @@ class LabeledStepperRow extends StatelessWidget {
       );
 }
 
-/// Primary maroon-gradient CTA button.
+/// Primary brand-gradient CTA button.
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;

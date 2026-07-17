@@ -37,19 +37,18 @@ class OrderDetailScreen extends ConsumerWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      BackCircleButton(onTap: nav.back),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Order #${order.id}', style: AppText.display(size: 18)),
-                          Text('${order.placed} · ${v.typeLine}', style: AppText.body(size: 12, color: AppColors.bodyGrey)),
-                        ],
+                      ScreenHeader(
+                        title: 'Order #${order.id}',
+                        onBack: nav.back,
+                        trailing: StatusBadge(label: v.statusLabel, fg: v.statusFg, bg: v.statusBg),
                       ),
-                      const Spacer(),
-                      StatusBadge(label: v.statusLabel, fg: v.statusFg, bg: v.statusBg),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20, top: 2),
+                        child: Text('${order.placed} · ${v.typeLine}', style: AppText.body(size: 12, color: AppColors.bodyGrey)),
+                      ),
                     ],
                   ),
                 ),
@@ -80,7 +79,7 @@ class OrderDetailScreen extends ConsumerWidget {
                         height: 40,
                         decoration: BoxDecoration(color: AppColors.greenPaleBg2, borderRadius: BorderRadius.circular(12)),
                         alignment: Alignment.center,
-                        child: const Text('📞', style: TextStyle(fontSize: 18)),
+                        child: const Icon(Icons.phone_outlined, size: 18, color: AppColors.ink),
                       ),
                     ],
                   ),
@@ -177,7 +176,7 @@ class OrderDetailScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.cardBorder), borderRadius: BorderRadius.circular(18)),
                     child: Row(
                       children: [
-                        Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.amberPaleBg, borderRadius: BorderRadius.circular(12)), alignment: Alignment.center, child: const Text('🛵', style: TextStyle(fontSize: 18))),
+                        Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.amberPaleBg, borderRadius: BorderRadius.circular(12)), alignment: Alignment.center, child: const Icon(Icons.delivery_dining_outlined, size: 18, color: AppColors.ink)),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -202,7 +201,7 @@ class OrderDetailScreen extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            const Text('📍', style: TextStyle(fontSize: 15)),
+                            const Icon(Icons.location_on_outlined, size: 18, color: AppColors.blue),
                             const SizedBox(width: 9),
                             Text('Rider is delivering to customer', style: AppText.body(size: 12.5, weight: FontWeight.w800, color: AppColors.blue)),
                           ],

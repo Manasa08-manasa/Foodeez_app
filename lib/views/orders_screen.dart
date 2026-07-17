@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controllers/navigation_controller.dart';
+import '../controllers/orders_controller.dart';
 import '../models/models.dart';
 import '../models/order_view.dart';
-import '../controllers/orders_controller.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
-class OrdersScreen extends ConsumerWidget {
+class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
 
+  @override
+  ConsumerState<OrdersScreen> createState() => _OrdersScreenState();
+}
+
+class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   static const _tabs = ['ongoing', 'ready', 'completed'];
   static const _tabLabels = ['Ongoing', 'Ready', 'History'];
   static const _typeChips = [
@@ -19,7 +25,15 @@ class OrdersScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(ordersControllerProvider).refresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final orders = ref.watch(ordersControllerProvider);
     final selectedTabIx = _tabs.indexOf(orders.ordersTab);
     final list = orders.tabOrders(orders.ordersTab);
@@ -28,13 +42,17 @@ class OrdersScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ScreenHeader(
+            title: 'Orders',
+            onBack: () => ref.read(navigationControllerProvider).back(),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Orders', style: AppText.display(size: 20)),
-                const SizedBox(height: 14),
+                Text('Track incoming, ready, and completed orders in one place.', style: AppText.body(size: 13.5, color: AppColors.bodyGrey)),
+                const SizedBox(height: 10),
                 SegmentedPills(
                   labels: _tabLabels,
                   counts: [orders.newCount + orders.prepCount, orders.readyCount, 0],
@@ -58,30 +76,41 @@ class OrdersScreen extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: list.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Nothing here yet', style: AppText.body(size: 15, weight: FontWeight.w700)),
-                          const SizedBox(height: 4),
-                          Text(
-                            orders.ordersTab == 'ready'
-                                ? 'Orders marked ready will show here.'
-                                : (orders.ordersTab == 'completed' ? 'Completed orders will appear here.' : 'New and preparing orders will show here.'),
-                            textAlign: TextAlign.center,
-                            style: AppText.body(size: 12.5, color: AppColors.bodyGrey),
+            child: RefreshIndicator(
+              onRefresh: () => ref.read(ordersControllerProvider).refresh(),
+              child: list.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 120),
+                      children: [
+                        const SizedBox(height: 80),
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Nothing here yet', style: AppText.body(size: 15, weight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  orders.ordersTab == 'ready'
+                                      ? 'Orders marked ready will show here.'
+                                      : (orders.ordersTab == 'completed' ? 'Completed orders will appear here.' : 'New and preparing orders will show here.'),
+                                  textAlign: TextAlign.center,
+                                  style: AppText.body(size: 12.5, color: AppColors.bodyGrey),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    )
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 120),
+                      children: list.map((o) => _OrderCard(order: o)).toList(),
                     ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 120),
-                    children: list.map((o) => _OrderCard(order: o)).toList(),
-                  ),
+            ),
           ),
         ],
       ),
