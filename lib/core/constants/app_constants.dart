@@ -12,8 +12,13 @@ class AppConstants {
   static const int defaultPageSize = 20;
   static const Duration ordersPollInterval = Duration(seconds: 15);
 
-  /// Partner KDS kitchen pool (GET /partner/orders).
+  /// Partner KDS pool — Orders screen (GET /partner/orders).
   static const String partnerActiveStatuses = 'PLACED,ACCEPTED,PREPARING';
+
+  /// Home live orders (GET /restaurant/orders).
+  static const String homeLiveOrderStatuses = 'PLACED,CONFIRMED,PREPARING,READY_FOR_PICKUP';
+  static const int homeLiveOrdersPage = 1;
+  static const int homeLiveOrdersLimit = 20;
 
   /// Restaurant-admin ongoing pool — catches CONFIRMED orders not in partner API.
   static const String ongoingOrderStatuses = 'PLACED,ACCEPTED,CONFIRMED,PREPARING';

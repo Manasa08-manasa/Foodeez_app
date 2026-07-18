@@ -5,6 +5,7 @@ import '../models/order_view.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/orders_controller.dart';
 import '../core/utils/order_status_utils.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -30,12 +31,14 @@ class OrderDetailScreen extends ConsumerWidget {
     final canMarkReady = orders.canMarkReady(order.id);
     final showMarkReady = canMarkReady;
     final showFooter = OrderStatusUtils.isPlaced(apiStatus) || showMarkReady;
+    final r = AppResponsive.of(context);
+    final footerBottom = r.safeBottom(extra: 16);
 
     return SafeArea(
       child: Stack(
         children: [
           SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(16, 4, 16, showFooter ? 110 : 24),
+            padding: EdgeInsets.fromLTRB(16, 4, 16, showFooter ? 110 + footerBottom : r.dockClearance(showDock: false)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -149,9 +152,11 @@ class OrderDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Pickup OTP', style: AppText.body(size: 12, color: Colors.white.withValues(alpha: 0.9))),
+                            Expanded(
+                              child: Text('Pickup OTP', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, color: Colors.white.withValues(alpha: 0.9))),
+                            ),
+                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
@@ -225,7 +230,7 @@ class OrderDetailScreen extends ConsumerWidget {
               right: 0,
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+                padding: EdgeInsets.fromLTRB(16, 14, 16, footerBottom),
                 decoration: BoxDecoration(color: Colors.white, border: const Border(top: BorderSide(color: AppColors.hairline)), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 20, offset: const Offset(0, -6))]),
                 child: v.isIncoming
                     ? Row(

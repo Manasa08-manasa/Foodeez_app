@@ -1,0 +1,7 @@
+{
+  "API_BASE_URL": "https://int.foodeez.in/restaurant/api/v1",
+  "GOOGLE_MAPS_API_KEY": "YOUR_GOOGLE_MAPS_API_KEY",
+  "RAZORPAY_KEY_ID": "rzp_live_YOUR_KEY_ID",
+  "ENCRYPT_PASSWORD": "false",
+  "PASSWORD_KEY": ""
+}

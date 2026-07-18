@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/navigation_controller.dart';
 import 'controllers/orders_controller.dart';
+import 'utils/responsive.dart';
 import 'utils/theme.dart';
 import 'widgets/dock_nav.dart';
 import 'widgets/incoming_order_alert.dart';
@@ -41,12 +42,15 @@ class FoodeezPartnerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
       child: MaterialApp(
-        title: 'Foodeez Partner',
+        title: 'FooDeeZ Partner',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
           scaffoldBackgroundColor: AppColors.surface,
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.accent, primary: AppColors.accent),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.accent,
+            primary: AppColors.accent,
+          ),
           fontFamily: 'Plus Jakarta Sans',
           splashFactory: InkRipple.splashFactory,
         ),
@@ -108,17 +112,20 @@ class AppShell extends ConsumerWidget {
         body: Stack(
           children: [
             Positioned.fill(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                layoutBuilder: (currentChild, previousChildren) {
-                  final children = [...previousChildren];
-                  if (currentChild != null) {
-                    children.add(currentChild);
-                  }
-                  return Stack(fit: StackFit.expand, children: children);
-                },
-                transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                child: KeyedSubtree(key: ValueKey(nav.screen), child: screen),
+              child: AdaptiveContentWidth(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  layoutBuilder: (currentChild, previousChildren) {
+                    final children = [...previousChildren];
+                    if (currentChild != null) {
+                      children.add(currentChild);
+                    }
+                    return Stack(fit: StackFit.expand, children: children);
+                  },
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
+                  child: KeyedSubtree(key: ValueKey(nav.screen), child: screen),
+                ),
               ),
             ),
             // Navigation header is rendered by individual screens using
@@ -129,7 +136,10 @@ class AppShell extends ConsumerWidget {
                 right: 14,
                 // Sit above Android/iOS system nav (gesture bar / 3-button nav).
                 bottom: 12 + MediaQuery.viewPaddingOf(context).bottom,
-                child: const DockNav(),
+                child: AdaptiveContentWidth(
+                  maxWidth: AppResponsive.of(context).dockMaxWidth,
+                  child: const DockNav(),
+                ),
               ),
             if (orders.showAlert) const IncomingOrderAlert(),
             if (orders.prepFor != null) const PrepTimePrompt(),

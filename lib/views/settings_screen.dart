@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/settings_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -35,7 +36,7 @@ class SettingsScreen extends ConsumerWidget {
     final fssaiOk = auth.restaurant?.fssaiNumber != null && auth.restaurant!.fssaiNumber!.isNotEmpty;
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 130),
+        padding: AppResponsive.of(context).scrollPadding(showDock: true, horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

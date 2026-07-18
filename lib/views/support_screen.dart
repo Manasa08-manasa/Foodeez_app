@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/mock_data.dart';
 import '../controllers/navigation_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -13,7 +14,7 @@ class SupportScreen extends ConsumerWidget {
     final nav = ref.read(navigationControllerProvider);
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: AppResponsive.of(context).scrollPadding(showDock: false, horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

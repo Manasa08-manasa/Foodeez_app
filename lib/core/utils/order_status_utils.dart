@@ -7,6 +7,8 @@ class OrderStatusUtils {
   static const ready = {'READY', 'READY_FOR_PICKUP', 'PICKED_UP', 'ON_THE_WAY'};
   static const completed = {'DELIVERED', 'COMPLETED', 'CANCELLED', 'REJECTED', 'FAILED'};
 
+  static const homeLive = {'PLACED', 'CONFIRMED', 'PREPARING', 'READY_FOR_PICKUP'};
+
   static String norm(String? status) => status?.toUpperCase().trim() ?? '';
 
   static bool isOngoing(String? status) => ongoing.contains(norm(status));
@@ -15,6 +17,7 @@ class OrderStatusUtils {
   static bool isCompleted(String? status) => completed.contains(norm(status));
   static bool isPlaced(String? status) => norm(status) == 'PLACED';
   static bool isAccepted(String? status) => norm(status) == 'ACCEPTED';
+  static bool isHomeLive(String? status) => homeLive.contains(norm(status));
   static bool canPartnerMarkReady(String? status) => isAccepted(status);
 
   /// Prefer the more advanced status when the same order appears in multiple API pools.

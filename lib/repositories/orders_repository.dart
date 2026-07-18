@@ -49,8 +49,17 @@ class OrdersRepository {
     }
   }
 
-  /// Home / KDS live pool via partner endpoint.
+  /// Orders screen — GET /partner/orders (PLACED, ACCEPTED, PREPARING).
   Future<List<ApiOrder>> getPartnerActiveOrders() => getLiveOrders();
+
+  /// Home live orders — GET /restaurant/orders?page=1&limit=20&status=PLACED,CONFIRMED,PREPARING,READY_FOR_PICKUP
+  Future<List<ApiOrder>> getHomeLiveOrders() {
+    return getRestaurantOrders(
+      page: AppConstants.homeLiveOrdersPage,
+      limit: AppConstants.homeLiveOrdersLimit,
+      status: AppConstants.homeLiveOrderStatuses,
+    );
+  }
 
   Future<List<ApiOrder>> getOngoingOrders() {
     return getRestaurantOrders(
@@ -79,9 +88,6 @@ class OrdersRepository {
       dateFrom: startOfDay.toIso8601String(),
     );
   }
-
-  /// @deprecated Use [getPartnerActiveOrders] for live KDS pool.
-  Future<List<ApiOrder>> getHomeLiveOrders() => getPartnerActiveOrders();
 
   Future<ApiOrder> getOrder(String orderId) async {
     try {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/menu_controller.dart';
 import '../controllers/navigation_controller.dart';
 import '../models/models.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -14,6 +15,7 @@ class MenuScreen extends ConsumerWidget {
     final menu = ref.watch(menuControllerProvider);
     final sections = menu.menuSections;
     const dietChips = [('all', 'All'), ('veg', '🌿 Veg'), ('nonveg', '🔺 Non-veg'), ('in', 'In stock'), ('out', 'Sold out')];
+    final bottomPad = AppResponsive.of(context).dockClearance(showDock: true);
 
     return SafeArea(
       child: Column(
@@ -73,7 +75,7 @@ class MenuScreen extends ConsumerWidget {
                     ),
                   )
                 : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPad),
                     children: sections
                         .map((sec) => Padding(
                               padding: const EdgeInsets.only(bottom: 18),

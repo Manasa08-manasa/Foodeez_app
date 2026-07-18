@@ -8,6 +8,7 @@ import '../controllers/earnings_controller.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/orders_controller.dart';
 import '../controllers/reviews_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../utils/utils.dart';
 import '../widgets/common.dart';
@@ -30,10 +31,13 @@ class DashboardScreen extends ConsumerWidget {
     final prepMins = live.isEmpty
         ? 16
         : (live.map((o) => o.prepMinutes).fold<int>(0, (a, b) => a + b) / live.length).round();
+    final r = AppResponsive.of(context);
+    final statsCols = r.gridColumns(phone: 2, tablet: 4, wide: 4);
+    final manageCols = r.gridColumns(phone: 2, tablet: 3, wide: 4);
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 130),
+        padding: r.scrollPadding(showDock: true),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -45,7 +49,7 @@ class DashboardScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(auth.displayName, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.display(size: 20, letterSpacing: -0.3)),
-                      Text(auth.locationLine, style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
+                      Text(auth.locationLine, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
                     ],
                   ),
                 ),
@@ -79,8 +83,8 @@ class DashboardScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(orders.online ? 'Online — accepting orders' : 'Offline', style: AppText.body(size: 15, weight: FontWeight.w800, color: orders.online ? AppColors.greenDark : AppColors.redDark)),
-                          Text(orders.online ? 'Customers can order right now' : 'You will not receive new orders', style: AppText.body(size: 12, color: AppColors.bodyGrey)),
+                          Text(orders.online ? 'Online — accepting orders' : 'Offline', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 15, weight: FontWeight.w800, color: orders.online ? AppColors.greenDark : AppColors.redDark)),
+                          Text(orders.online ? 'Customers can order right now' : 'You will not receive new orders', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, color: AppColors.bodyGrey)),
                         ],
                       ),
                     ),
@@ -99,12 +103,12 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             GridView.count(
-              crossAxisCount: 2,
+              crossAxisCount: statsCols,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 1.55,
+              childAspectRatio: statsCols >= 4 ? 1.7 : 1.45,
               children: [
                 GestureDetector(
                   onTap: nav.toEarnings,
@@ -117,13 +121,19 @@ class DashboardScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Earnings', style: AppText.body(size: 12, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.85))),
+                            Flexible(child: Text('Earnings', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.85)))),
                             Text('→', style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
                           ],
                         ),
-                        Text(moneyFmt(earnValue), style: AppText.display(size: 22, color: Colors.white)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(moneyFmt(earnValue), style: AppText.display(size: 22, color: Colors.white)),
+                        ),
                         Text(
                           earnings.usingApi ? '${todayEarn.orders} orders today' : '▲ 12% vs yesterday',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: AppText.body(size: 11, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.85)),
                         ),
                       ],
@@ -192,14 +202,13 @@ class DashboardScreen extends ConsumerWidget {
             Text('Manage', style: AppText.display(size: 16)),
             const SizedBox(height: 12),
             GridView.count(
-              crossAxisCount: 2,
+              crossAxisCount: manageCols,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 3.2,
+              childAspectRatio: manageCols >= 3 ? 3.6 : 3.0,
               children: [
-                
                 _QuickAction(label: 'Menu', icon: const Icon(Icons.restaurant_menu_outlined, size: 18, color: AppColors.accent), tint: AppColors.maroonTint, onTap: () => nav.tab('menu')),
                 _QuickAction(label: 'Bookings', icon: const Icon(Icons.calendar_month_outlined, size: 18, color: AppColors.accent), tint: AppColors.bluePaleBg2, onTap: () => nav.go('bookings')),
                 _QuickAction(label: 'Offers', icon: const Icon(Icons.local_offer_outlined, size: 18, color: AppColors.accent), tint: AppColors.amberPaleBg, onTap: nav.toOffers),
@@ -223,14 +232,20 @@ class DashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppText.body(size: 12, weight: FontWeight.w600, color: AppColors.bodyGrey)),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, weight: FontWeight.w600, color: AppColors.bodyGrey)),
           Row(
             children: [
-              Text(value, style: AppText.display(size: 21)),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(value, style: AppText.display(size: 21)),
+                ),
+              ),
               if (star) ...[const SizedBox(width: 4), const Text('★', style: TextStyle(color: AppColors.star, fontSize: 16))],
             ],
           ),
-          if (sub != null) Text(sub, style: AppText.body(size: 11, weight: FontWeight.w600, color: subColor ?? AppColors.bodyGrey)),
+          if (sub != null) Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 11, weight: FontWeight.w600, color: subColor ?? AppColors.bodyGrey)),
         ],
       ),
     );
@@ -258,18 +273,20 @@ class _LiveOrderCard extends ConsumerWidget {
               children: [
                 StatusBadge(label: v.statusLabel, fg: v.statusFg, bg: v.statusBg),
                 const SizedBox(width: 9),
-                Text('#${order.id}', style: AppText.body(size: 13, weight: FontWeight.w700)),
-                const Spacer(),
-                Text(order.placed, style: AppText.body(size: 12, color: AppColors.bodyGrey)),
+                Flexible(child: Text('#${order.id}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 13, weight: FontWeight.w700))),
+                const SizedBox(width: 8),
+                Text(order.placed, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, color: AppColors.bodyGrey)),
               ],
             ),
             const SizedBox(height: 7),
             Text(v.itemsSummary, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12.5, color: AppColors.midGrey)),
             const SizedBox(height: 9),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${v.totalStr} · ${order.type}', style: AppText.body(size: 13, weight: FontWeight.w700)),
+                Expanded(
+                  child: Text('${v.totalStr} · ${order.type}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 13, weight: FontWeight.w700)),
+                ),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
                     if (v.isIncoming) {

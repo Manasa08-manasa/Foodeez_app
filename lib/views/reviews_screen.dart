@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/reviews_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -21,7 +22,7 @@ class ReviewsScreen extends ConsumerWidget {
           ScreenHeader(title: 'Reviews', onBack: nav.back),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, AppResponsive.of(context).dockClearance(showDock: false)),
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),

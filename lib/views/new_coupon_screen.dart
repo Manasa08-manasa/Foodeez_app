@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/mock_data.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/offers_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -21,12 +22,15 @@ class NewCouponScreen extends ConsumerWidget {
     final nav = ref.read(navigationControllerProvider);
     final offersCtrl = ref.watch(offersControllerProvider);
     final preview = offersCtrl.buildCouponPreview();
+    final r = AppResponsive.of(context);
+    final footerBottom = r.safeBottom(extra: 16);
+    final typeCols = r.gridColumns(phone: 2, tablet: 4, wide: 4);
 
     return SafeArea(
       child: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
+            padding: EdgeInsets.fromLTRB(16, 4, 16, 110 + footerBottom),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -41,9 +45,9 @@ class NewCouponScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(child: Text(preview.title, style: AppText.display(size: 22, color: Colors.white))),
+                            Expanded(child: Text(preview.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.display(size: 22, color: Colors.white))),
+                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.24), borderRadius: BorderRadius.circular(20)),
@@ -64,25 +68,27 @@ class NewCouponScreen extends ConsumerWidget {
                 ),
                 Padding(padding: const EdgeInsets.fromLTRB(2, 18, 2, 9), child: Text('DISCOUNT TYPE', style: AppText.body(size: 12, weight: FontWeight.w800, color: AppColors.bodyGrey, letterSpacing: 0.4))),
                 GridView.count(
-                  crossAxisCount: 2,
+                  crossAxisCount: typeCols,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
-                  childAspectRatio: 3.2,
+                  childAspectRatio: typeCols >= 4 ? 3.4 : 2.8,
                   children: _types.map((t) {
                     final (key, label, icon, suffix) = t;
                     final selected = offersCtrl.couponType == key;
                     return GestureDetector(
                       onTap: () => offersCtrl.pickCouponType(key),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         decoration: BoxDecoration(color: selected ? AppColors.accent : Colors.white, border: Border.all(color: selected ? AppColors.accent : AppColors.chipBorder, width: 1.5), borderRadius: BorderRadius.circular(14)),
                         child: Row(
                           children: [
                             Icon(icon, size: 18, color: selected ? AppColors.goldBright : AppColors.accent),
-                            const SizedBox(width: 9),
-                            Text(label, style: AppText.body(size: 12.5, weight: FontWeight.w800, color: selected ? Colors.white : AppColors.midGrey)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12.5, weight: FontWeight.w800, color: selected ? Colors.white : AppColors.midGrey)),
+                            ),
                           ],
                         ),
                       ),
@@ -206,7 +212,7 @@ class NewCouponScreen extends ConsumerWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+              padding: EdgeInsets.fromLTRB(16, 14, 16, footerBottom),
               decoration: BoxDecoration(color: Colors.white, border: const Border(top: BorderSide(color: AppColors.hairline)), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 20, offset: const Offset(0, -6))]),
               child: PrimaryButton(label: 'Create coupon', onTap: offersCtrl.createCoupon),
             ),

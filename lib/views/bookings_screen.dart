@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/bookings_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../utils/utils.dart';
 import '../widgets/common.dart';
@@ -14,6 +15,7 @@ class BookingsScreen extends ConsumerWidget {
     final nav = ref.read(navigationControllerProvider);
     final bookingsCtrl = ref.watch(bookingsControllerProvider);
     final onBookings = bookingsCtrl.bookTab == 'bookings';
+    final bottomPad = AppResponsive.of(context).dockClearance(showDock: false);
 
     return SafeArea(
       child: Column(
@@ -27,7 +29,7 @@ class BookingsScreen extends ConsumerWidget {
           Expanded(
             child: onBookings
                 ? ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
+                    padding: EdgeInsets.fromLTRB(16, 14, 16, bottomPad),
                     children: bookingsCtrl.bookings.map((b) {
                       final stBg = {'Confirmed': AppColors.greenPaleBg2, 'Completed': AppColors.cardBorder, 'Cancelled': AppColors.redPaleBg2}[b.status]!;
                       final stFg = {'Confirmed': AppColors.green, 'Completed': AppColors.bodyGrey, 'Cancelled': AppColors.redDark}[b.status]!;
@@ -42,35 +44,29 @@ class BookingsScreen extends ConsumerWidget {
                               children: [
                                 StatusBadge(label: b.status, fg: stFg, bg: stBg),
                                 const SizedBox(width: 9),
-                                Text('#${b.id}', style: AppText.body(size: 13, weight: FontWeight.w700)),
-                                const Spacer(),
-                                Text('${b.date} · ${b.time}', style: AppText.body(size: 12, color: AppColors.bodyGrey)),
+                                Flexible(child: Text('#${b.id}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 13, weight: FontWeight.w700))),
+                                const SizedBox(width: 8),
+                                Flexible(child: Text('${b.date} · ${b.time}', maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right, style: AppText.body(size: 12, color: AppColors.bodyGrey))),
                               ],
                             ),
-                            Padding(padding: const EdgeInsets.only(top: 10), child: Text(b.name, style: AppText.display(size: 15))),
+                            Padding(padding: const EdgeInsets.only(top: 10), child: Text(b.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.display(size: 15))),
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
-                              child: Row(
-                                children: [
-                                  Text('👥 ${b.party} guests', style: AppText.body(size: 12.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
-                                  Text('  ·  ', style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
-                                  Text(b.ref, style: AppText.body(size: 12.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
-                                ],
-                              ),
+                              child: Text('👥 ${b.party} guests  ·  ${b.ref}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
                             ),
                             Container(
                               margin: const EdgeInsets.only(top: 11),
                               padding: const EdgeInsets.only(top: 11),
                               decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.hairline, style: BorderStyle.solid))),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   StatusBadge(
                                     label: b.paid ? 'Prepaid ${moneyFmt(b.amount)}' : 'Pay at venue',
                                     fg: b.paid ? AppColors.blue : AppColors.amber,
                                     bg: b.paid ? AppColors.bluePaleBg2 : const Color(0xFFFBF7ED),
                                   ),
-                                  Text(b.note, style: AppText.body(size: 11.5, color: AppColors.lightGreyText)),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(b.note, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right, style: AppText.body(size: 11.5, color: AppColors.lightGreyText))),
                                 ],
                               ),
                             ),
@@ -80,7 +76,7 @@ class BookingsScreen extends ConsumerWidget {
                     }).toList(),
                   )
                 : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
+                    padding: EdgeInsets.fromLTRB(16, 14, 16, bottomPad),
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
@@ -118,11 +114,12 @@ class BookingsScreen extends ConsumerWidget {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(p.label, style: AppText.body(size: 13, weight: FontWeight.w700)),
-                                        Padding(padding: const EdgeInsets.only(top: 2), child: Text('${p.method} · ${p.when}', style: AppText.body(size: 11, color: AppColors.bodyGrey))),
+                                        Text(p.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 13, weight: FontWeight.w700)),
+                                        Padding(padding: const EdgeInsets.only(top: 2), child: Text('${p.method} · ${p.when}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 11, color: AppColors.bodyGrey))),
                                       ],
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   Text(amtLabel, style: AppText.body(size: 13.5, weight: FontWeight.w800, color: amtColor)),
                                 ],
                               ),

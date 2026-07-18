@@ -202,8 +202,17 @@ class SegmentedPills extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(labels[i], style: AppText.body(size: 13, weight: FontWeight.w800, color: selected ? AppColors.accent : AppColors.bodyGrey)),
+                    Flexible(
+                      child: Text(
+                        labels[i],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppText.body(size: 13, weight: FontWeight.w800, color: selected ? AppColors.accent : AppColors.bodyGrey),
+                      ),
+                    ),
                     if (count > 0) ...[
                       const SizedBox(width: 5),
                       Container(

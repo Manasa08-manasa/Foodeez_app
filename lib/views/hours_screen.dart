@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/navigation_controller.dart';
 import '../services/mock_data.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -42,7 +43,7 @@ class HoursScreen extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: AppResponsive.of(context).scrollPadding(showDock: false, horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -65,15 +66,17 @@ class HoursScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 11),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(statusTitle, style: AppText.body(size: 13.5, weight: FontWeight.w800, color: (branch?.isOnline ?? true) ? AppColors.greenDark : AppColors.redDark)),
-                      Text(
-                        (branch?.isOnline ?? true) ? 'Kitchen accepting orders' : 'Not accepting orders',
-                        style: AppText.body(size: 11.5, color: const Color(0xFF5C7A63)),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(statusTitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(size: 13.5, weight: FontWeight.w800, color: (branch?.isOnline ?? true) ? AppColors.greenDark : AppColors.redDark)),
+                        Text(
+                          (branch?.isOnline ?? true) ? 'Kitchen accepting orders' : 'Not accepting orders',
+                          style: AppText.body(size: 11.5, color: const Color(0xFF5C7A63)),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

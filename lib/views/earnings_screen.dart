@@ -4,6 +4,7 @@ import '../services/mock_data.dart';
 import '../models/models.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/earnings_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../utils/utils.dart';
 import '../widgets/common.dart';
@@ -12,7 +13,7 @@ class EarningsScreen extends ConsumerWidget {
   const EarningsScreen({super.key});
 
   static const _periods = ['today', 'week', 'month'];
-  static const _periodLabels = ['Today', 'This week', 'This month'];
+  static const _periodLabels = ['Today', 'Week', 'Month'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,10 +21,11 @@ class EarningsScreen extends ConsumerWidget {
     final earningsCtrl = ref.watch(earningsControllerProvider);
     final d = earningsCtrl.currentEarningsPeriod;
     final settlements = earningsCtrl.visibleSettlements;
+    final r = AppResponsive.of(context);
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+        padding: r.scrollPadding(showDock: false),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -38,20 +40,25 @@ class EarningsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Net payout · ${d.label}', style: AppText.body(size: 12.5, color: Colors.white.withValues(alpha: 0.85))),
-                      Text(d.span, style: AppText.body(size: 11, color: Colors.white.withValues(alpha: 0.7))),
+                      Expanded(
+                        child: Text('Net payout · ${d.label}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12.5, color: Colors.white.withValues(alpha: 0.85))),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(d.span, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 11, color: Colors.white.withValues(alpha: 0.7))),
                     ],
                   ),
-                  Text(moneyFmt(d.net), style: AppText.display(size: 34, color: Colors.white)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(moneyFmt(d.net), style: AppText.display(size: 34, color: Colors.white)),
+                  ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text('${d.orders} orders', style: AppText.body(size: 11.5, color: Colors.white.withValues(alpha: 0.82))),
-                      Text('  ·  ', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
-                      Text('GMV ${moneyFmt(d.gmv)}', style: AppText.body(size: 11.5, color: Colors.white.withValues(alpha: 0.82))),
-                    ],
+                  Text(
+                    '${d.orders} orders  ·  GMV ${moneyFmt(d.gmv)}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.body(size: 11.5, color: Colors.white.withValues(alpha: 0.82)),
                   ),
                 ],
               ),
@@ -61,14 +68,19 @@ class EarningsScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(color: AppColors.greenPaleBg2, border: Border.all(color: AppColors.greenPaleBorder), borderRadius: BorderRadius.circular(16)),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('You saved vs 30% commission', style: AppText.body(size: 12, weight: FontWeight.w700, color: AppColors.greenDark)),
-                      Text(moneyFmt(d.saved), style: AppText.display(size: 24, color: AppColors.green)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('You saved vs 30% commission', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, weight: FontWeight.w700, color: AppColors.greenDark)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(moneyFmt(d.saved), style: AppText.display(size: 24, color: AppColors.green)),
+                        ),
+                      ],
+                    ),
                   ),
                   const Icon(Icons.show_chart_outlined, size: 26, color: AppColors.green),
                 ],
@@ -88,8 +100,8 @@ class EarningsScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Subscription · Tier ${earningsCtrl.subscriptionTierToday}', style: AppText.body(size: 13.5, weight: FontWeight.w800)),
-                          Text('${moneyFmt(earningsCtrl.subscriptionFeeToday)} · ${subscriptionTiers[earningsCtrl.subscriptionTierToday - 1].range} orders/day', style: AppText.body(size: 11.5, color: AppColors.bodyGrey)),
+                          Text('Subscription · Tier ${earningsCtrl.subscriptionTierToday}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 13.5, weight: FontWeight.w800)),
+                          Text('${moneyFmt(earningsCtrl.subscriptionFeeToday)} · ${subscriptionTiers[earningsCtrl.subscriptionTierToday - 1].range} orders/day', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(size: 11.5, color: AppColors.bodyGrey)),
                         ],
                       ),
                     ),

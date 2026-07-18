@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/navigation_controller.dart';
 import '../services/mock_data.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -11,9 +12,10 @@ class InsightsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nav = ref.read(navigationControllerProvider);
+    final r = AppResponsive.of(context);
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+        padding: r.scrollPadding(showDock: true),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -22,12 +24,12 @@ class InsightsScreen extends ConsumerWidget {
             Text('Last 7 days', style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
 
             GridView.count(
-              crossAxisCount: 2,
+              crossAxisCount: r.gridColumns(phone: 2, tablet: 3, wide: 4),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 1.7,
+              childAspectRatio: r.isTablet ? 1.9 : 1.55,
               children: insightsKpis
                   .map((k) => Container(
                         padding: const EdgeInsets.all(14),
@@ -35,9 +37,13 @@ class InsightsScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(k.label, style: AppText.body(size: 11.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
-                            Text(k.value, style: AppText.display(size: 21)),
-                            Text(k.delta, style: AppText.body(size: 11, weight: FontWeight.w600, color: k.up ? AppColors.green : AppColors.red)),
+                            Text(k.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 11.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(k.value, style: AppText.display(size: 21)),
+                            ),
+                            Text(k.delta, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 11, weight: FontWeight.w600, color: k.up ? AppColors.green : AppColors.red)),
                           ],
                         ),
                       ))

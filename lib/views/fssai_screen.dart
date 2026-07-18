@@ -5,6 +5,7 @@ import '../controllers/navigation_controller.dart';
 import '../models/api/menu_models.dart';
 import '../repositories/restaurant_repository.dart';
 import '../services/mock_data.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -67,7 +68,7 @@ class _FssaiScreenState extends ConsumerState<FssaiScreen> {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: AppResponsive.of(context).scrollPadding(showDock: false, horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

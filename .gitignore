@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Release secrets (never commit real values)
+dart_defines.release.json
+ios/Flutter/Secrets.xcconfig
+android/secrets.properties

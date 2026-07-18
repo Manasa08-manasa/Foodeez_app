@@ -4,6 +4,7 @@ import '../services/mock_data.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/orders_controller.dart';
 import '../controllers/earnings_controller.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../utils/utils.dart';
 import '../widgets/common.dart';
@@ -25,7 +26,7 @@ class SubscriptionScreen extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+        padding: AppResponsive.of(context).scrollPadding(showDock: false),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -50,9 +51,11 @@ class SubscriptionScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Today's plan · ${subscriptionTiers[curTier - 1].range} orders", style: AppText.body(size: 12, color: Colors.white.withValues(alpha: 0.85))),
+                      Expanded(
+                        child: Text("Today's plan · ${subscriptionTiers[curTier - 1].range} orders", maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, color: Colors.white.withValues(alpha: 0.85))),
+                      ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),

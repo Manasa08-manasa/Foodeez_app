@@ -6,8 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/navigation_controller.dart';
-import '../core/constants/env.dart';
 import '../services/mock_data.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -57,7 +57,7 @@ class AddressScreen extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: AppResponsive.of(context).scrollPadding(showDock: false, horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -90,7 +90,8 @@ class AddressScreen extends ConsumerWidget {
                         Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
                       },
                       onMapCreated: (mapController) async {
-                        assert(Env.googleMapsApiKey.isNotEmpty);
+                        // Native Maps SDK key comes from android/secrets.properties / iOS Secrets.xcconfig.
+                        // Dart-side Env.googleMapsApiKey is optional (Static Maps / Places).
                         if (hasCoords) {
                           await mapController.animateCamera(CameraUpdate.newLatLngZoom(target, 16));
                         }

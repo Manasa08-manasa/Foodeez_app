@@ -4,6 +4,7 @@ import '../controllers/navigation_controller.dart';
 import '../controllers/orders_controller.dart';
 import '../models/models.dart';
 import '../models/order_view.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/common.dart';
 
@@ -17,12 +18,6 @@ class OrdersScreen extends ConsumerStatefulWidget {
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   static const _tabs = ['new', 'preparing', 'outForDelivery', 'completed'];
   static const _tabLabels = ['New', 'Preparing', 'Out for delivery', 'Completed'];
-  static const _typeChips = [
-    ('all', 'All'),
-    (OrderType.delivery, 'Delivery'),
-    (OrderType.takeaway, 'Takeaway'),
-    (OrderType.dining, 'Dine-in'),
-  ];
 
   @override
   void initState() {
@@ -37,6 +32,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final orders = ref.watch(ordersControllerProvider);
     final selectedTabIx = _tabs.indexOf(orders.ordersTab);
     final list = orders.tabOrders(orders.ordersTab);
+    final bottomPad = AppResponsive.of(context).dockClearance(showDock: true);
 
     return SafeArea(
       child: Column(
@@ -62,26 +58,13 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             onSelect: (i) => orders.setOrdersTab(_tabs[i]),
           ),
           const SizedBox(height: 10),
-          // SizedBox(
-          //   height: 40,
-          //   child: ListView(
-          //     padding: const EdgeInsets.symmetric(horizontal: 16),
-          //     scrollDirection: Axis.horizontal,
-          //     children: _typeChips
-          //         .map((c) => Padding(
-          //               padding: const EdgeInsets.only(right: 8),
-          //               child: FzChip(label: c.$2, selected: orders.orderTypeFilter == c.$1, onTap: () => orders.setOrderTypeFilter(c.$1)),
-          //             ))
-          //         .toList(),
-          //   ),
-          // ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => ref.read(ordersControllerProvider).refresh(),
               child: list.isEmpty
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 120),
+                      padding: EdgeInsets.fromLTRB(16, 6, 16, bottomPad),
                       children: [
                         const SizedBox(height: 80),
                         Center(
@@ -111,7 +94,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                     )
                   : ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 120),
+                      padding: EdgeInsets.fromLTRB(16, 6, 16, bottomPad),
                       children: list.map((o) => _OrderCard(order: o)).toList(),
                     ),
             ),
@@ -147,9 +130,9 @@ class _OrderCard extends ConsumerWidget {
                     children: [
                       StatusBadge(label: v.statusLabel, fg: v.statusFg, bg: v.statusBg),
                       const SizedBox(width: 9),
-                      Text('#${order.id}', style: AppText.body(size: 14, weight: FontWeight.w700)),
-                      const Spacer(),
-                      Text(order.placed, style: AppText.body(size: 12, color: AppColors.bodyGrey)),
+                      Flexible(child: Text('#${order.id}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 14, weight: FontWeight.w700))),
+                      const SizedBox(width: 8),
+                      Text(order.placed, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12, color: AppColors.bodyGrey)),
                     ],
                   ),
                   const SizedBox(height: 9),
@@ -163,9 +146,13 @@ class _OrderCard extends ConsumerWidget {
                         child: Text(v.custInitials, style: AppText.body(size: 11, weight: FontWeight.w800, color: AppColors.accent)),
                       ),
                       const SizedBox(width: 8),
-                      Text(order.customer, style: AppText.body(size: 13, weight: FontWeight.w700)),
+                      Flexible(
+                        child: Text(order.customer, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 13, weight: FontWeight.w700)),
+                      ),
                       const SizedBox(width: 4),
-                      Text('· ${v.typeLine}', style: AppText.body(size: 11.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
+                      Flexible(
+                        child: Text('· ${v.typeLine}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 11.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
+                      ),
                     ],
                   ),
                   Container(
@@ -178,9 +165,11 @@ class _OrderCard extends ConsumerWidget {
                           .map((l) => Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 2.5),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text('${l.qty}× ${l.name}', style: AppText.body(size: 12.5, weight: FontWeight.w600, color: AppColors.midGrey)),
+                                    Expanded(
+                                      child: Text('${l.qty}× ${l.name}', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(size: 12.5, weight: FontWeight.w600, color: AppColors.midGrey)),
+                                    ),
+                                    const SizedBox(width: 8),
                                     Text('₹${l.lineTotal}', style: AppText.body(size: 12.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
                                   ],
                                 ),
@@ -190,10 +179,10 @@ class _OrderCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 11),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(v.totalStr, style: AppText.body(size: 14, weight: FontWeight.w800)),
-                      Text(order.payLabel, style: AppText.body(size: 11.5, weight: FontWeight.w600, color: AppColors.bodyGrey)),
+                      Expanded(child: Text(v.totalStr, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body(size: 14, weight: FontWeight.w800))),
+                      const SizedBox(width: 8),
+                      Flexible(child: Text(order.payLabel, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right, style: AppText.body(size: 11.5, weight: FontWeight.w600, color: AppColors.bodyGrey))),
                     ],
                   ),
                 ],
