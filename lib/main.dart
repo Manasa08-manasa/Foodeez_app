@@ -21,8 +21,10 @@ import 'views/subscription_screen.dart';
 import 'views/new_coupon_screen.dart';
 import 'views/offers_screen.dart';
 import 'views/insights_screen.dart';
+import 'views/branches_screen.dart';
 import 'views/reviews_screen.dart';
 import 'views/settings_screen.dart';
+import 'views/team_screen.dart';
 import 'views/hours_screen.dart';
 import 'views/support_screen.dart';
 import 'views/address_screen.dart';
@@ -71,6 +73,7 @@ class AppShell extends ConsumerWidget {
     'orders': OrdersScreen(),
     'detail': OrderDetailScreen(),
     'menu': MenuScreen(),
+    'branches': BranchesScreen(),
     'earnings': EarningsScreen(),
     'subscription': SubscriptionScreen(),
     'newCoupon': NewCouponScreen(),
@@ -78,6 +81,7 @@ class AppShell extends ConsumerWidget {
     'insights': InsightsScreen(),
     'reviews': ReviewsScreen(),
     'settings': SettingsScreen(),
+    'team': TeamScreen(),
     'hours': HoursScreen(),
     'support': SupportScreen(),
     'address': AddressScreen(),

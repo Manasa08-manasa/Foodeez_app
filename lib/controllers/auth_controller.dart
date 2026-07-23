@@ -18,6 +18,7 @@ class AuthController extends ChangeNotifier {
   AuthUser? user;
   ApiRestaurant? restaurant;
   ApiBranch? activeBranch;
+  List<ApiBranch> branches = [];
   bool bootstrapping = true;
   bool loading = false;
   String? error;
@@ -121,15 +122,47 @@ class AuthController extends ChangeNotifier {
       debugPrint('[AuthController] restaurant load failed: $e');
     }
     try {
-      final branches = await repo.getBranches(rid);
-      if (branches.isNotEmpty) {
-        activeBranch = branches.firstWhere(
+      final branchList = await repo.getBranches(rid);
+      branches = branchList;
+      if (branchList.isNotEmpty) {
+        activeBranch = branchList.firstWhere(
           (b) => b.isOnline,
-          orElse: () => branches.first,
+          orElse: () => branchList.first,
         );
       }
     } catch (e) {
+      branches = [];
       debugPrint('[AuthController] branches load failed: $e');
+    }
+  }
+
+  Future<void> setBranch(String branchId) async {
+    if (branchId == activeBranch?.id) return;
+    final existing = branches.firstWhere(
+      (b) => b.id == branchId,
+      orElse: () => ApiBranch(
+        id: '',
+        restaurantId: '',
+        name: '',
+      ),
+    );
+    if (existing.id.isNotEmpty) {
+      activeBranch = existing;
+      notifyListeners();
+      return;
+    }
+
+    final rid = restaurantId;
+    if (rid == null || rid.isEmpty) return;
+    try {
+      final branch = await ref.read(restaurantRepositoryProvider).getBranch(rid, branchId);
+      activeBranch = branch;
+      if (!branches.any((b) => b.id == branch.id)) {
+        branches = [...branches, branch];
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[AuthController] setBranch failed: $e');
     }
   }
 

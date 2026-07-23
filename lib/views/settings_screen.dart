@@ -23,6 +23,7 @@ class SettingsScreen extends ConsumerWidget {
     (Icons.local_offer_outlined, 'Offers & coupons', 'offers'),
     (Icons.schedule_outlined, 'Operating hours', 'hours'),
     (Icons.location_on_outlined, 'Address & location', 'address'),
+    (Icons.group_outlined, 'Team', 'team'),
     (Icons.description_outlined, 'FSSAI & documents', 'fssai'),
     (Icons.account_balance_outlined, 'Bank & payouts', 'earnings'),
     (Icons.help_outline, 'Help & support', 'support'),

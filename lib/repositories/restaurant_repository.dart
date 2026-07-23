@@ -5,6 +5,7 @@ import '../core/constants/app_constants.dart';
 import '../core/network/api_client.dart';
 import '../models/api/menu_models.dart';
 import '../models/api/restaurant_models.dart';
+import '../models/api/user_models.dart';
 
 final restaurantRepositoryProvider = Provider<RestaurantRepository>((ref) {
   return RestaurantRepository(ref.read(dioProvider));
@@ -102,6 +103,26 @@ class RestaurantRepository {
     try {
       final res = await _dio.patch(ApiEndpoints.menuItem(itemId), data: data);
       return ApiMenuItem.fromJson(unwrapObject(res.data));
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<List<ApiRestaurantUser>> getRestaurantUsers(String restaurantId) async {
+    try {
+      final res = await _dio.get(ApiEndpoints.restaurantUsers(restaurantId));
+      return unwrapList(res.data, keys: const ['users', 'data', 'items', 'results'])
+          .whereType<Map>()
+          .map((e) => ApiRestaurantUser.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<void> inviteRestaurantUser(String restaurantId, Map<String, dynamic> data) async {
+    try {
+      await _dio.post(ApiEndpoints.restaurantUsers(restaurantId), data: data);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

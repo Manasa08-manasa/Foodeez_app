@@ -259,6 +259,32 @@ class FzChip extends StatelessWidget {
   }
 }
 
+class FzTextField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final TextInputType keyboardType;
+
+  const FzTextField({super.key, required this.label, required this.controller, this.keyboardType = TextInputType.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: AppText.body(size: 12.5, weight: FontWeight.w700, color: AppColors.bodyGrey),
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.cardBorder)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.cardBorder)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.accent)),
+      ),
+    );
+  }
+}
+
 /// The pill on/off switch used across Dashboard, Menu, Settings, and the coupon builder.
 class ToggleSwitch extends StatelessWidget {
   final bool on;

@@ -29,6 +29,7 @@ class NavigationController extends ChangeNotifier {
 
   void toDashboard() => tab('dashboard');
   void toOrders() => tab('orders');
+  void toBranches() => tab('branches');
   void toSettings() => tab('settings');
   void toReviews() => go('reviews');
   void toEarnings() => go('earnings');
@@ -50,8 +51,8 @@ class NavigationController extends ChangeNotifier {
 
   static const _activeTabFor = {
     'dashboard': 'dashboard', 'orders': 'orders', 'detail': 'orders', 'menu': 'menu',
-    'insights': 'insights', 'earnings': 'settings', 'reviews': 'settings',
-    'offers': 'settings', 'settings': 'settings', 'subscription': 'settings', 'newCoupon': 'settings',
+    'branches': 'branches', 'insights': 'insights', 'earnings': 'settings', 'reviews': 'settings',
+    'offers': 'settings', 'settings': 'settings', 'team': 'settings', 'subscription': 'settings', 'newCoupon': 'settings',
   };
 
   String get activeTab => _activeTabFor[screen] ?? '';

@@ -12,8 +12,8 @@ class DockNav extends ConsumerWidget {
   static const _tabs = [
     ('dashboard', 'Home', Icons.home_outlined),
     ('orders', 'Orders', Icons.receipt_long_outlined),
+    ('branches', 'Branches', Icons.store_outlined),
     ('menu', 'Menu', Icons.restaurant_menu_outlined),
-    ('insights', 'Insights', Icons.bar_chart_outlined),
     ('settings', 'More', Icons.settings_outlined),
   ];
 
