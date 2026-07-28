@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/utils/api_mappers.dart';
+import '../models/api/menu_models.dart';
 import '../models/models.dart';
 import '../repositories/restaurant_repository.dart';
 import '../services/mock_data.dart';
@@ -27,6 +28,7 @@ class MenuController extends ChangeNotifier {
 
   List<MenuItem> items = List<MenuItem>.from(menuItems);
   List<String> sectionOrder = List<String>.from(menuSectionOrder);
+  List<ApiMenuCategory> categories = const [];
 
   final Map<String, int> priceOverrides = {};
   final Map<String, bool> availOverrides = {};
@@ -43,9 +45,21 @@ class MenuController extends ChangeNotifier {
       final branchChanged = auth.branchId != _lastBranchId;
       final justLoggedIn = !_wasAuthenticated;
       _wasAuthenticated = true;
-      _lastBranchId = auth.branchId;
       if (justLoggedIn || branchChanged || !usingApi) {
+        if (branchChanged) {
+          items = [];
+          categories = [];
+          sectionOrder = [];
+          menuCat = 'all';
+          menuDiet = 'all';
+          priceOverrides.clear();
+          availOverrides.clear();
+          notifyListeners();
+        }
+        _lastBranchId = auth.branchId;
         refresh();
+      } else {
+        _lastBranchId = auth.branchId;
       }
     } else if (!auth.isAuthenticated && _wasAuthenticated) {
       _wasAuthenticated = false;
@@ -63,6 +77,7 @@ class MenuController extends ChangeNotifier {
   void _resetToMock() {
     items = List<MenuItem>.from(menuItems);
     sectionOrder = List<String>.from(menuSectionOrder);
+    categories = const [];
     priceOverrides.clear();
     availOverrides.clear();
     usingApi = false;
@@ -89,16 +104,17 @@ class MenuController extends ChangeNotifier {
       // GET /branches/{branchId}/menu-items
       final catsFut = repo.getCategories(branchId);
       final itemsFut = repo.getMenuItems(branchId);
-      final categories = await catsFut;
+      final apiCategories = await catsFut;
       final apiItems = await itemsFut;
 
       debugPrint(
-        '[Menu] branches/$branchId/menu-categories → ${categories.length}; '
+        '[Menu] branches/$branchId/menu-categories → ${apiCategories.length}; '
         'menu-items → ${apiItems.length}',
       );
 
       final catLabelById = <String, String>{};
-      for (final c in categories) {
+      categories = apiCategories;
+      for (final c in apiCategories) {
         final label = c.displayName.isNotEmpty ? c.displayName : c.name;
         if (c.id.isNotEmpty && label.isNotEmpty) {
           catLabelById[c.id] = label;
@@ -107,7 +123,7 @@ class MenuController extends ChangeNotifier {
 
       // Category chip / section order follows menu-categories API order.
       final orderedSections = <String>[];
-      for (final c in categories) {
+      for (final c in apiCategories) {
         final label = catLabelById[c.id];
         if (label != null && !orderedSections.contains(label)) {
           orderedSections.add(label);
@@ -140,6 +156,50 @@ class MenuController extends ChangeNotifier {
       loading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> createCategory(String name, String displayName) async {
+    final auth = ref.read(authControllerProvider);
+    final branchId = auth.branchId;
+    if (!auth.isAuthenticated || branchId == null || branchId.isEmpty) {
+      throw Exception('Select a branch before creating a category.');
+    }
+    await ref.read(restaurantRepositoryProvider).createCategory(branchId, {
+      'name': name.trim(),
+      'displayName': displayName.trim(),
+    });
+    await refresh();
+  }
+
+  Future<void> createMenuItem({
+    required String name,
+    required String categoryId,
+    required double price,
+    String description = '',
+    String currency = 'INR',
+    bool isVisible = true,
+    bool isInStock = true,
+    Map<String, dynamic>? discount,
+  }) async {
+    final auth = ref.read(authControllerProvider);
+    final branchId = auth.branchId;
+    if (!auth.isAuthenticated || branchId == null || branchId.isEmpty) {
+      throw Exception('Select a branch before creating an item.');
+    }
+    final payload = <String, dynamic>{
+      'categoryId': categoryId,
+      'name': name.trim(),
+      'description': description.trim(),
+      'price': price,
+      'currency': currency,
+      'isVisible': isVisible,
+      'isInStock': isInStock,
+    };
+    if (discount != null && discount.isNotEmpty) {
+      payload['discount'] = discount;
+    }
+    await ref.read(restaurantRepositoryProvider).createMenuItem(branchId, payload);
+    await refresh();
   }
 
   bool isAvail(MenuItem m) => availOverrides[m.id] ?? m.baseAvail;

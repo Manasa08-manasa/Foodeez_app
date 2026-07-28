@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controllers/navigation_controller.dart';
 import '../controllers/team_controller.dart';
+import '../core/constants/app_constants.dart';
 import '../models/api/user_models.dart';
 import '../utils/responsive.dart';
 import '../utils/theme.dart';
@@ -18,13 +19,15 @@ class TeamScreen extends ConsumerStatefulWidget {
 class _TeamScreenState extends ConsumerState<TeamScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  String _role = 'restaurant_manager';
+  String? _role;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(teamControllerProvider).refresh();
+      final team = ref.read(teamControllerProvider);
+      setState(() => _role = team.defaultInviteRole);
+      team.refresh();
     });
   }
 
@@ -35,10 +38,24 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     super.dispose();
   }
 
+  void _syncRoleWithOptions(TeamController team) {
+    final options = team.inviteRoleOptions;
+    if (options.isEmpty) {
+      _role = null;
+      return;
+    }
+    if (_role == null || !options.any((option) => option.value == _role)) {
+      _role = team.defaultInviteRole;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final nav = ref.read(navigationControllerProvider);
     final team = ref.watch(teamControllerProvider);
+    _syncRoleWithOptions(team);
+    final roleOptions = team.inviteRoleOptions;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: AppResponsive.of(context).scrollPadding(showDock: true, horizontal: 16),
@@ -51,10 +68,40 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               'Add and manage partner users for your restaurant.',
               style: AppText.body(size: 12.5, color: AppColors.bodyGrey),
             ),
+            if (team.successMessage != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                ),
+                child: Text(team.successMessage!, style: AppText.body(size: 12.5, color: AppColors.green)),
+              ),
+            ],
+            if (team.error != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFECDD3)),
+                ),
+                child: Text(team.error!, style: AppText.body(size: 12.5, color: AppColors.red)),
+              ),
+            ],
             const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.cardBorder), borderRadius: BorderRadius.circular(18)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(18),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -67,30 +114,47 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                   Text('Role', style: AppText.body(size: 13.5, weight: FontWeight.w700)),
                   const SizedBox(height: 8),
                   DecoratedBox(
-                    decoration: BoxDecoration(border: Border.all(color: AppColors.cardBorder), borderRadius: BorderRadius.circular(14), color: AppColors.surface),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.cardBorder),
+                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.surface,
+                    ),
                     child: DropdownButtonFormField<String>(
+                      key: ValueKey(_role),
                       initialValue: _role,
-                      decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13)),
-                      items: [
-                        DropdownMenuItem(value: 'restaurant_manager', child: Text('Manager', style: AppText.body(size: 13.5))),
-                        DropdownMenuItem(value: 'restaurant_staff', child: Text('Staff', style: AppText.body(size: 13.5))),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) setState(() => _role = value);
-                      },
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                      ),
+                      items: roleOptions
+                          .map(
+                            (option) => DropdownMenuItem(
+                              value: option.value,
+                              child: Text(option.label, style: AppText.body(size: 13.5)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: roleOptions.isEmpty
+                          ? null
+                          : (value) {
+                              if (value != null) setState(() => _role = value);
+                            },
                     ),
                   ),
                   const SizedBox(height: 16),
                   FilledButton(
-                    onPressed: team.loading
+                    onPressed: team.loading || _role == null
                         ? null
                         : () async {
                             final name = _nameController.text.trim();
                             final email = _emailController.text.trim();
                             if (name.isEmpty || email.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Enter name and email.')),
+                              );
                               return;
                             }
-                            final success = await ref.read(teamControllerProvider).invite(name, email, _role);
+                            final success = await ref.read(teamControllerProvider).invite(name, email, _role!);
                             if (success) {
                               _nameController.clear();
                               _emailController.clear();
@@ -101,26 +165,32 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: Text(team.loading ? 'Inviting…' : 'Invite user', style: AppText.body(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
+                    child: Text(
+                      team.loading ? 'Inviting…' : 'Invite user',
+                      style: AppText.body(size: 13.5, weight: FontWeight.w700, color: Colors.white),
+                    ),
                   ),
-                  if (team.error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(team.error!, style: AppText.body(size: 12.5, color: AppColors.red)),
-                  ],
                 ],
               ),
             ),
             const SizedBox(height: 18),
-            Text('Team members', style: AppText.body(size: 14, weight: FontWeight.w700)),
+            Text('Existing users', style: AppText.body(size: 14, weight: FontWeight.w700)),
             const SizedBox(height: 10),
-            if (team.loading)
+            if (team.loading && team.users.isEmpty)
               const Center(child: CircularProgressIndicator(color: AppColors.accent))
             else if (team.users.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.cardBorder), borderRadius: BorderRadius.circular(18)),
-                child: Text('No team members found.', style: AppText.body(size: 13.5, color: AppColors.bodyGrey)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.cardBorder),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  'No users have been invited yet.',
+                  style: AppText.body(size: 13.5, color: AppColors.bodyGrey),
+                ),
               )
             else
               Column(
@@ -133,38 +203,53 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   }
 
   Widget _buildUserTile(ApiRestaurantUser user) {
+    final roleLabel = AppConstants.restaurantRoleLabel(user.role);
+    final displayName = user.name.isNotEmpty ? user.name : user.email;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppColors.cardBorder), borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.cardBorder),
+        borderRadius: BorderRadius.circular(18),
+      ),
       child: Row(
         children: [
-          CircleAvatar(radius: 22, backgroundColor: AppColors.maroonTint, child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U', style: AppText.body(size: 16, weight: FontWeight.w700, color: AppColors.accent))),
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: AppColors.maroonTint,
+            child: Text(
+              displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+              style: AppText.body(size: 16, weight: FontWeight.w700, color: AppColors.accent),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.name, style: AppText.body(size: 14, weight: FontWeight.w700)),
+                Text(displayName, style: AppText.body(size: 14, weight: FontWeight.w700)),
                 const SizedBox(height: 4),
                 Text(user.email, style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
                 const SizedBox(height: 4),
-                Text(user.role.replaceAll('_', ' ').replaceFirst('restaurant ', '').capitalize(), style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
+                Text(roleLabel, style: AppText.body(size: 12.5, color: AppColors.bodyGrey)),
               ],
             ),
           ),
           if (user.status.isNotEmpty)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-              child: Text(user.status.replaceFirstMapped(RegExp(r'^(.)'), (m) => m[0]!.toUpperCase()), style: AppText.body(size: 11, weight: FontWeight.w700, color: AppColors.accent)),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                user.status.replaceFirstMapped(RegExp(r'^(.)'), (m) => m[0]!.toUpperCase()),
+                style: AppText.body(size: 11, weight: FontWeight.w700, color: AppColors.accent),
+              ),
             ),
         ],
       ),
     );
   }
-}
-
-extension on String {
-  String capitalize() => isEmpty ? this : substring(0, 1).toUpperCase() + substring(1);
 }

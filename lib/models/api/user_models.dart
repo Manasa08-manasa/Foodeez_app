@@ -14,12 +14,16 @@ class ApiRestaurantUser {
   });
 
   factory ApiRestaurantUser.fromJson(Map<String, dynamic> json) {
+    final isActive = json['isActive'];
+    final status = json['status']?.toString();
     return ApiRestaurantUser(
       id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
+      name: (json['displayName'] ?? json['name'] ?? '').toString(),
       email: json['email']?.toString() ?? '',
       role: json['role']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
+      status: status != null && status.isNotEmpty
+          ? status
+          : (isActive is bool ? (isActive ? 'active' : 'inactive') : ''),
     );
   }
 }

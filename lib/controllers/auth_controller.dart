@@ -136,8 +136,8 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<void> setBranch(String branchId) async {
-    if (branchId == activeBranch?.id) return;
+  Future<void> setBranch(String branchId, {bool force = false}) async {
+    if (!force && branchId == activeBranch?.id) return;
     final existing = branches.firstWhere(
       (b) => b.id == branchId,
       orElse: () => ApiBranch(
@@ -169,6 +169,18 @@ class AuthController extends ChangeNotifier {
   Future<void> refreshContext() async {
     await _loadRestaurantContext();
     notifyListeners();
+  }
+
+  Future<ApiBranch> createBranch(Map<String, dynamic> data) async {
+    final rid = restaurantId;
+    if (rid == null || rid.isEmpty) {
+      throw Exception('Restaurant context is not available.');
+    }
+    final branch = await ref.read(restaurantRepositoryProvider).createBranch(rid, data);
+    branches = [...branches, branch];
+    activeBranch = branch;
+    notifyListeners();
+    return branch;
   }
 
   Future<void> setOnline(bool online) async {

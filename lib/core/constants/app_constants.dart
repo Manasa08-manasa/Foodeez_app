@@ -53,6 +53,8 @@ class AppConstants {
   static const String roleRestaurantOwner = 'restaurant_owner';
   static const String roleRestaurantManager = 'restaurant_manager';
   static const String roleRestaurantStaff = 'restaurant_staff';
+  static const String roleSalesOperator = 'sales_operator';
+  static const String roleSuperAdmin = 'super_admin';
 
   static const List<String> restaurantRoles = [
     roleRestaurantAdmin,
@@ -60,6 +62,40 @@ class AppConstants {
     roleRestaurantManager,
     roleRestaurantStaff,
   ];
+
+  /// Invite-user role options — matches restaurant-admin users page.
+  static const List<RestaurantInviteRole> restaurantInviteRoles = [
+    RestaurantInviteRole(roleRestaurantOwner, 'Owner'),
+    RestaurantInviteRole(roleRestaurantManager, 'Manager'),
+    RestaurantInviteRole(roleRestaurantStaff, 'Staff'),
+    RestaurantInviteRole(roleSalesOperator, 'Sales'),
+  ];
+
+  static const String defaultInviteRole = roleRestaurantManager;
+
+  static String restaurantRoleLabel(String role) {
+    for (final option in restaurantInviteRoles) {
+      if (option.value == role) return option.label;
+    }
+    return role.replaceAll('_', ' ');
+  }
+
+  /// Roles the current user can assign when inviting team members.
+  static List<RestaurantInviteRole> inviteRolesForInviter(String? inviterRole) {
+    if (inviterRole == roleSalesOperator || inviterRole == roleSuperAdmin) {
+      return restaurantInviteRoles;
+    }
+    return restaurantInviteRoles
+        .where((option) => option.value != roleSalesOperator)
+        .toList();
+  }
+}
+
+class RestaurantInviteRole {
+  final String value;
+  final String label;
+
+  const RestaurantInviteRole(this.value, this.label);
 }
 
 class ApiEndpoints {

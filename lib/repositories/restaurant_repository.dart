@@ -55,6 +55,15 @@ class RestaurantRepository {
     }
   }
 
+  Future<ApiBranch> createBranch(String restaurantId, Map<String, dynamic> data) async {
+    try {
+      final res = await _dio.post(ApiEndpoints.branches(restaurantId), data: data);
+      return ApiBranch.fromJson(unwrapObject(res.data));
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<ApiBranch> updateBranch(
     String restaurantId,
     String branchId,
@@ -84,6 +93,15 @@ class RestaurantRepository {
     }
   }
 
+  Future<ApiMenuCategory> createCategory(String branchId, Map<String, dynamic> data) async {
+    try {
+      final res = await _dio.post(ApiEndpoints.menuCategories(branchId), data: data);
+      return ApiMenuCategory.fromJson(unwrapObject(res.data));
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<List<ApiMenuItem>> getMenuItems(String branchId) async {
     try {
       final res = await _dio.get(ApiEndpoints.menuItems(branchId));
@@ -94,6 +112,15 @@ class RestaurantRepository {
           .whereType<Map>()
           .map((e) => ApiMenuItem.fromJson(Map<String, dynamic>.from(e)))
           .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<ApiMenuItem> createMenuItem(String branchId, Map<String, dynamic> data) async {
+    try {
+      final res = await _dio.post(ApiEndpoints.menuItems(branchId), data: data);
+      return ApiMenuItem.fromJson(unwrapObject(res.data));
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
