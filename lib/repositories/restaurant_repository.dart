@@ -11,6 +11,36 @@ final restaurantRepositoryProvider = Provider<RestaurantRepository>((ref) {
   return RestaurantRepository(ref.read(dioProvider));
 });
 
+List<Map<String, dynamic>> buildInvitePayloadVariants(Map<String, dynamic> data) {
+  final displayName = (data['displayName'] ?? data['name'] ?? '').toString().trim();
+  final email = (data['email'] ?? data['emailAddress'] ?? '').toString().trim();
+  final role = (data['role'] ?? '').toString().trim();
+  final roleVariants = <String>{
+    role,
+    if (role.startsWith('restaurant_')) role.replaceFirst('restaurant_', ''),
+    if (role == 'restaurant_owner') 'owner',
+    if (role == 'restaurant_manager') 'manager',
+    if (role == 'restaurant_staff') 'staff',
+    if (role == 'sales_operator') 'sales',
+    if (role == 'sales') 'sales_operator',
+  }.where((value) => value.isNotEmpty).toList();
+
+  if (roleVariants.isEmpty) {
+    roleVariants.add(role);
+  }
+
+  return roleVariants
+      .map(
+        (roleVariant) => {
+          'name': displayName,
+          'displayName': displayName,
+          'email': email,
+          'role': roleVariant,
+        },
+      )
+      .toList();
+}
+
 class RestaurantRepository {
   RestaurantRepository(this._dio);
 
@@ -148,11 +178,23 @@ class RestaurantRepository {
   }
 
   Future<void> inviteRestaurantUser(String restaurantId, Map<String, dynamic> data) async {
-    try {
-      await _dio.post(ApiEndpoints.restaurantUsers(restaurantId), data: data);
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    final payloads = buildInvitePayloadVariants(data);
+    Object? lastError;
+
+    for (final payload in payloads) {
+      try {
+        await _dio.post(ApiEndpoints.restaurantUsers(restaurantId), data: payload);
+        return;
+      } on DioException catch (e) {
+        lastError = e;
+      }
     }
+
+    if (lastError is DioException) {
+      throw ApiException.fromDioError(lastError);
+    }
+
+    throw ApiException('Unable to invite user. Check the email and role.');
   }
 
   Future<List<ApiCoupon>> getCoupons(String restaurantId) async {

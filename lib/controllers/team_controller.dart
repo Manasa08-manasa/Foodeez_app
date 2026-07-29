@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/network/api_client.dart';
 import '../models/api/user_models.dart';
 import '../repositories/restaurant_repository.dart';
 import 'auth_controller.dart';
@@ -65,7 +66,7 @@ class TeamController extends ChangeNotifier {
       await refresh();
       return true;
     } catch (e) {
-      error = 'Unable to invite user. Check the email and role.';
+      error = e is ApiException ? e.message : 'Unable to invite user. Check the email and role.';
       return false;
     } finally {
       loading = false;

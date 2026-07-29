@@ -82,12 +82,26 @@ class AppConstants {
 
   /// Roles the current user can assign when inviting team members.
   static List<RestaurantInviteRole> inviteRolesForInviter(String? inviterRole) {
-    if (inviterRole == roleSalesOperator || inviterRole == roleSuperAdmin) {
+    final normalizedRole = inviterRole?.trim().toLowerCase();
+
+    if (normalizedRole == roleSalesOperator || normalizedRole == roleSuperAdmin) {
       return restaurantInviteRoles;
     }
-    return restaurantInviteRoles
-        .where((option) => option.value != roleSalesOperator)
-        .toList();
+
+    if (normalizedRole == roleRestaurantManager) {
+      return restaurantInviteRoles
+          .where((option) => option.value == roleRestaurantManager || option.value == roleRestaurantStaff)
+          .toList();
+    }
+
+    if (normalizedRole == roleRestaurantOwner || normalizedRole == roleRestaurantAdmin) {
+      return restaurantInviteRoles;
+    }
+
+    return [
+      const RestaurantInviteRole(roleRestaurantManager, 'Manager'),
+      const RestaurantInviteRole(roleRestaurantStaff, 'Staff'),
+    ];
   }
 }
 
