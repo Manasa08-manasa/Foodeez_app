@@ -48,6 +48,7 @@ dependencies:
   razorpay_flutter: ^1.4.0
   image: ^4.5.4
   socket_io_client: ^3.1.2
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -86,6 +87,7 @@ flutter:
     - assets/images/foodeez-full.png
     - assets/images/foodeez-mark.png
     - assets/images/Logo_with_background.png
+    - assets/images/universfield-school-bell-199584.mp3
 
   fonts:
     - family: Bricolage Grotesque

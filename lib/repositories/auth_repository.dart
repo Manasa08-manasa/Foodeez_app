@@ -103,6 +103,15 @@ class AuthRepository {
     await TokenStorage.clearToken();
   }
 
+  Future<void> deleteAccount() async {
+    try {
+      await _dio.delete(ApiEndpoints.deleteAccount);
+      await TokenStorage.clearToken();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<AuthUser?> getStoredUser() async {
     final token = await TokenStorage.getToken();
     if (token == null || token.isEmpty) return null;

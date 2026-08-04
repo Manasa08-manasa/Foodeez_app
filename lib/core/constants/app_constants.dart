@@ -117,6 +117,7 @@ class ApiEndpoints {
 
   static const String login = '/auth/login';
   static const String me = '/auth/me';
+  static const String deleteAccount = '/auth/me';
   static const String passwordReset = '/auth/password-reset';
   static const String passwordResetConfirm = '/auth/password-reset/confirm';
 

@@ -319,18 +319,21 @@ class BranchesScreen extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          FilledButton(
-                            onPressed: () async {
-                              await ref.read(authControllerProvider).setBranch(branch.id, force: true);
-                              await ref.read(menuControllerProvider).refresh();
-                              ref.read(navigationControllerProvider).go('menu');
-                            },
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.accent,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: () async {
+                                await ref.read(authControllerProvider).setBranch(branch.id, force: true);
+                                await ref.read(menuControllerProvider).refresh();
+                                ref.read(navigationControllerProvider).go('menu');
+                              },
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.accent,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              child: Text('Manage menu', style: AppText.body(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
                             ),
-                            child: Text('Manage menu', style: AppText.body(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
                           ),
                         ],
                       ),

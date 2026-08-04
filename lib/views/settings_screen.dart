@@ -27,6 +27,7 @@ class SettingsScreen extends ConsumerWidget {
     (Icons.description_outlined, 'FSSAI & documents', 'fssai'),
     (Icons.account_balance_outlined, 'Bank & payouts', 'earnings'),
     (Icons.help_outline, 'Help & support', 'support'),
+    (Icons.delete_outline, 'Delete account', 'deleteAccount'),
   ];
 
   @override
@@ -101,17 +102,33 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 children: _links.map((l) {
                       final (icon, title, route) = l;
+                      final isDelete = route == 'deleteAccount';
                       return GestureDetector(
-                        onTap: () => nav.go(route),
+                        onTap: () {
+                          if (isDelete) {
+                            _confirmDelete(context, ref);
+                          } else {
+                            nav.go(route);
+                          }
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.hairline))),
                           child: Row(
                             children: [
-                              Icon(icon, size: 20, color: AppColors.ink),
+                              Icon(icon, size: 20, color: isDelete ? AppColors.red : AppColors.ink),
                               const SizedBox(width: 12),
-                              Expanded(child: Text(title, style: AppText.body(size: 13.5, weight: FontWeight.w700))),
-                              const Icon(Icons.chevron_right, size: 18, color: AppColors.chevronGrey),
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: AppText.body(
+                                    size: 13.5,
+                                    weight: FontWeight.w700,
+                                    color: isDelete ? AppColors.red : AppColors.ink,
+                                  ),
+                                ),
+                              ),
+                              if (!isDelete) const Icon(Icons.chevron_right, size: 18, color: AppColors.chevronGrey),
                             ],
                           ),
                         ),
@@ -132,5 +149,39 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete account', style: AppText.body(size: 16, weight: FontWeight.w800)),
+        content: Text(
+          'Do you want to delete your account? This action cannot be undone.',
+          style: AppText.body(size: 13.5, color: AppColors.bodyGrey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel', style: AppText.body(size: 14, weight: FontWeight.w700, color: AppColors.bodyGrey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Delete', style: AppText.body(size: 14, weight: FontWeight.w700, color: AppColors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(authControllerProvider).deleteAccount();
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Failed to delete account. Please try again.')),
+      );
+    }
   }
 }

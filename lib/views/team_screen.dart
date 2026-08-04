@@ -142,32 +142,35 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: team.loading || _role == null
-                        ? null
-                        : () async {
-                            final name = _nameController.text.trim();
-                            final email = _emailController.text.trim();
-                            if (name.isEmpty || email.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Enter name and email.')),
-                              );
-                              return;
-                            }
-                            final success = await ref.read(teamControllerProvider).invite(name, email, _role!);
-                            if (success) {
-                              _nameController.clear();
-                              _emailController.clear();
-                            }
-                          },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: Text(
-                      team.loading ? 'Inviting…' : 'Invite user',
-                      style: AppText.body(size: 13.5, weight: FontWeight.w700, color: Colors.white),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: team.loading || _role == null
+                          ? null
+                          : () async {
+                              final name = _nameController.text.trim();
+                              final email = _emailController.text.trim();
+                              if (name.isEmpty || email.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Enter name and email.')),
+                                );
+                                return;
+                              }
+                              final success = await ref.read(teamControllerProvider).invite(name, email, _role!);
+                              if (success) {
+                                _nameController.clear();
+                                _emailController.clear();
+                              }
+                            },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: Text(
+                        team.loading ? 'Inviting…' : 'Invite user',
+                        style: AppText.body(size: 13.5, weight: FontWeight.w700, color: Colors.white),
+                      ),
                     ),
                   ),
                 ],

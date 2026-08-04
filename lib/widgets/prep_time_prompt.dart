@@ -76,8 +76,9 @@ class PrepTimePrompt extends ConsumerWidget {
                   padding: const EdgeInsets.only(top: 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _stepBtn('–', () => orders.bumpPrep(-1)),
+                      _stepBtn(Icons.remove, () => orders.bumpPrep(-1)),
                       SizedBox(
                         width: 120,
                         child: Column(
@@ -87,7 +88,7 @@ class PrepTimePrompt extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      _stepBtn('+', () => orders.bumpPrep(1)),
+                      _stepBtn(Icons.add, () => orders.bumpPrep(1)),
                     ],
                   ),
                 ),
@@ -117,14 +118,14 @@ class PrepTimePrompt extends ConsumerWidget {
     );
   }
 
-  Widget _stepBtn(String s, VoidCallback onTap) => GestureDetector(
+  Widget _stepBtn(IconData icon, VoidCallback onTap) => GestureDetector(
         onTap: onTap,
         child: Container(
           width: 52,
           height: 52,
           decoration: BoxDecoration(border: Border.all(color: AppColors.inputBorder, width: 1.5), borderRadius: BorderRadius.circular(16)),
           alignment: Alignment.center,
-          child: Text(s, style: AppText.body(size: 28, weight: FontWeight.w700, color: AppColors.accent)),
+          child: Icon(icon, size: 28, color: AppColors.accent),
         ),
       );
 }

@@ -97,6 +97,11 @@ class AuthController extends ChangeNotifier {
     ref.read(navigationControllerProvider).logout();
   }
 
+  Future<void> deleteAccount() async {
+    await ref.read(authRepositoryProvider).deleteAccount();
+    await logout();
+  }
+
   Future<void> _enrichProfile() async {
     if (user == null) return;
     try {

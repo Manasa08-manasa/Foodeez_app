@@ -12,6 +12,7 @@ import '../models/api/order_models.dart';
 import '../models/models.dart';
 import '../repositories/orders_repository.dart';
 import '../services/partner_orders_socket.dart';
+import '../services/sound_service.dart';
 import 'auth_controller.dart';
 import 'navigation_controller.dart';
 
@@ -100,6 +101,7 @@ class OrdersController extends ChangeNotifier {
     _alertTimer?.cancel();
     alertOpen = false;
     _alertOrderId = null;
+    unawaited(SoundService.stop());
     _initialLoadDone = false;
     _knownApiIds.clear();
     orders = [];
@@ -118,6 +120,7 @@ class OrdersController extends ChangeNotifier {
   void dispose() {
     _alertTimer?.cancel();
     _pollTimer?.cancel();
+    unawaited(SoundService.stop());
     _socket.disconnect();
     _authSub?.close();
     super.dispose();
@@ -343,6 +346,8 @@ class OrdersController extends ChangeNotifier {
   }
 
   void _openAlertFor(ApiOrder api) {
+    // Chime loops until accept / dismiss / auto-reject (only when receiving orders).
+    if (online) unawaited(SoundService.playNewOrderSound());
     final ui = ApiMappers.toUiOrder(api);
     _alertOrderId = ui.id;
     alertOpen = true;
@@ -365,6 +370,7 @@ class OrdersController extends ChangeNotifier {
     alertOpen = false;
     _alertOrderId = null;
     _alertTimer?.cancel();
+    unawaited(SoundService.stop());
   }
 
   void _startAlertCountdown() {
