@@ -293,6 +293,10 @@ class _LiveOrderCard extends ConsumerWidget {
                       orders.askPrep(order.id);
                     } else if (orders.canMarkReady(order.id)) {
                       orders.advance(order.id);
+                    } else {
+                      // When status is already `READY` / `OUT FOR DELIVERY`,
+                      // Home card should take you to the details page.
+                      orders.openOrder(order.id);
                     }
                   },
                   child: Container(

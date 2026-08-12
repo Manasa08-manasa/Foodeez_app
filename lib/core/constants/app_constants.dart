@@ -16,7 +16,11 @@ class AppConstants {
   static const String partnerActiveStatuses = 'PLACED,ACCEPTED,PREPARING';
 
   /// Home live orders (GET /restaurant/orders).
-  static const String homeLiveOrderStatuses = 'PLACED,CONFIRMED,PREPARING,READY_FOR_PICKUP';
+  /// Home should show only until the kitchen marks the order READY.
+  /// Once `status` becomes `READY` / `READY_FOR_PICKUP`, it should stop
+  /// appearing on Home and move to the Orders tabs.
+  static const String homeLiveOrderStatuses =
+      'PLACED,CONFIRMED,ACCEPTED,PREPARING';
   static const int homeLiveOrdersPage = 1;
   static const int homeLiveOrdersLimit = 20;
 

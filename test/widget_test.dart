@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foodeez_partner/main.dart';
+import 'package:foodeez_partner/models/api/auth_models.dart';
 import 'package:foodeez_partner/models/models.dart';
 import 'package:foodeez_partner/controllers/auth_controller.dart';
 import 'package:foodeez_partner/controllers/navigation_controller.dart';
@@ -23,10 +24,26 @@ Future<void> _settleBootstrap(WidgetTester tester) async {
   }
 }
 
+void _signInForTest(ProviderContainer container) {
+  final auth = container.read(authControllerProvider);
+  auth.user = const AuthUser(
+    token: 'test-token',
+    role: 'partner',
+    email: 'partner@test.com',
+    displayName: 'Test Partner',
+    restaurantId: 'rest-1',
+  );
+  container.read(navigationControllerProvider).syncAuthSession(true);
+  container.read(navigationControllerProvider).tab('dashboard');
+}
+
 void main() {
   testWidgets('App launches to the login screen', (WidgetTester tester) async {
     await tester.pumpWidget(const FoodeezPartnerApp());
     await _settleBootstrap(tester);
+
+    _container(tester).read(navigationControllerProvider).tab('login');
+    await tester.pump();
 
     expect(find.text('Log in to dashboard'), findsOneWidget);
     expect(find.text('Partner email'), findsOneWidget);
@@ -38,11 +55,26 @@ void main() {
     await _settleBootstrap(tester);
 
     final container = _container(tester);
-    container.read(navigationControllerProvider).tab('dashboard');
+    _signInForTest(container);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Live orders'), findsOneWidget);
+  });
+
+  testWidgets('System back from login does not open dashboard', (WidgetTester tester) async {
+    await tester.pumpWidget(const FoodeezPartnerApp());
+    await _settleBootstrap(tester);
+
+    final container = _container(tester);
+    container.read(navigationControllerProvider).tab('login');
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(find.text('Log in to dashboard'), findsOneWidget);
+    expect(find.text('Live orders'), findsNothing);
   });
 
   testWidgets('Register screen renders the multi-step registration form', (WidgetTester tester) async {
@@ -76,7 +108,7 @@ void main() {
     final container = _container(tester);
     final nav = container.read(navigationControllerProvider);
     final orders = container.read(ordersControllerProvider);
-    nav.tab('dashboard');
+    _signInForTest(container);
     await tester.pump();
 
     const screens = [
@@ -109,7 +141,7 @@ void main() {
     final nav = container.read(navigationControllerProvider);
     final orders = container.read(ordersControllerProvider);
     orders.orders = seedOrders();
-    nav.tab('dashboard');
+    _signInForTest(container);
     await tester.pump();
 
     final incomingId = orders.orders.firstWhere((o) => o.status == OrderStatus.incoming).id;
@@ -124,7 +156,7 @@ void main() {
     await _settleBootstrap(tester);
     final container = _container(tester);
     final nav = container.read(navigationControllerProvider);
-    nav.tab('dashboard');
+    _signInForTest(container);
     await tester.pump();
 
     for (final screen in ['earnings', 'subscription', 'offers', 'reviews', 'hours', 'support', 'address', 'fssai', 'bookings']) {

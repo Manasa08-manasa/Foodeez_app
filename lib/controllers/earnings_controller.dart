@@ -29,7 +29,9 @@ class EarningsController extends ChangeNotifier {
   String reportPeriod = 'month';
   final Map<String, String> reportDlState = {};
 
-  List<Settlement> settlements = seedSettlements();
+  // If backend is not integrated or fails, we show an empty list so the UI
+  // can display "No data found" (instead of showing seeded mock rows).
+  List<Settlement> settlements = const [];
   bool usingApi = false;
   int apiOrderCount = 0;
   int apiGmv = 0;
@@ -44,6 +46,8 @@ class EarningsController extends ChangeNotifier {
   Future<void> refresh() async {
     if (!ref.read(authControllerProvider).isAuthenticated) return;
     try {
+      // Keep using mock UI unless we have meaningful API data.
+      usingApi = false;
       final summary = await ref.read(ordersRepositoryProvider).getSettlementToday();
       apiOrderCount = summary.orderCount;
       apiGmv = summary.totalItemValue.round();
@@ -70,11 +74,10 @@ class EarningsController extends ChangeNotifier {
             tcs: 0,
             tds: summary.totalCommission.round(),
           ),
-          ...seedSettlements().where((s) => s.id != 'S1'),
         ];
         openSettleId = 'API-TODAY';
+        usingApi = true;
       }
-      usingApi = true;
       notifyListeners();
     } catch (e) {
       debugPrint('[Earnings] refresh failed: $e');
@@ -87,8 +90,22 @@ class EarningsController extends ChangeNotifier {
   }
 
   EarningsPeriod get currentEarningsPeriod => switch (earnPeriod) {
-        'week' => earningsWeek,
-        'month' => earningsMonth,
+        'week' => EarningsPeriod(
+            label: 'This week',
+            span: 'No data found',
+            orders: 0,
+            gmv: 0,
+            subscriptionFee: 0,
+            subNote: 'No data found',
+          ),
+        'month' => EarningsPeriod(
+            label: 'This month',
+            span: 'No data found',
+            orders: 0,
+            gmv: 0,
+            subscriptionFee: 0,
+            subNote: 'No data found',
+          ),
         _ => EarningsPeriod(
             label: 'Today',
             span: DateFormat('EEE, d MMM').format(DateTime.now()),

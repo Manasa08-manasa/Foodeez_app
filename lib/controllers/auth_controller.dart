@@ -57,7 +57,9 @@ class AuthController extends ChangeNotifier {
       user = stored;
       await _enrichProfile();
       await _loadRestaurantContext();
-      ref.read(navigationControllerProvider).tab('dashboard');
+      final nav = ref.read(navigationControllerProvider);
+      nav.syncAuthSession(true);
+      nav.tab('dashboard');
     } catch (e) {
       debugPrint('[AuthController] bootstrap failed: $e');
       user = null;
@@ -77,7 +79,9 @@ class AuthController extends ChangeNotifier {
       await _loadRestaurantContext();
       loading = false;
       notifyListeners();
-      ref.read(navigationControllerProvider).tab('dashboard');
+      final nav = ref.read(navigationControllerProvider);
+      nav.syncAuthSession(true);
+      nav.tab('dashboard');
       return true;
     } catch (e) {
       error = e.toString();

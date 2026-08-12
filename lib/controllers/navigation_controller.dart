@@ -8,7 +8,22 @@ class NavigationController extends ChangeNotifier {
   List<String> stack = ['splash'];
   String get screen => stack.last;
 
+  bool _isAuthenticated = false;
+
+  /// Kept in sync from [AppShell] so back/tab/go respect login state.
+  void syncAuthSession(bool authenticated) {
+    _isAuthenticated = authenticated;
+  }
+
+  static const publicScreens = {'splash', 'login', 'register'};
+
+  static bool isPublicScreen(String s) => publicScreens.contains(s);
+
   void go(String s) {
+    if (!_isAuthenticated && !isPublicScreen(s)) {
+      tab('login');
+      return;
+    }
     stack = [...stack, s];
     notifyListeners();
   }
@@ -16,13 +31,37 @@ class NavigationController extends ChangeNotifier {
   void back() {
     if (stack.length > 1) {
       stack = stack.sublist(0, stack.length - 1);
-    } else {
-      stack = ['dashboard'];
+      if (!_isAuthenticated && !isPublicScreen(screen)) {
+        stack = ['login'];
+      }
+      notifyListeners();
+      return;
     }
-    notifyListeners();
+
+    // Root screen — system back must not open dashboard without login.
+    if (!_isAuthenticated) {
+      if (screen == 'register') {
+        stack = ['login'];
+        notifyListeners();
+      }
+      return;
+    }
+
+    // Authenticated root tab: go back to dashboard.
+    // (Orders/Menu/Branches/Settings are top-level tabs, so "back" should
+    // return to dashboard instead of doing nothing.)
+    if (screen != 'dashboard') {
+      stack = ['dashboard'];
+      notifyListeners();
+    }
   }
 
   void tab(String s) {
+    if (!_isAuthenticated && !isPublicScreen(s)) {
+      stack = ['login'];
+      notifyListeners();
+      return;
+    }
     stack = [s];
     notifyListeners();
   }
@@ -38,6 +77,7 @@ class NavigationController extends ChangeNotifier {
   void toNewCoupon() => go('newCoupon');
 
   void logout() {
+    _isAuthenticated = false;
     stack = ['login'];
     notifyListeners();
   }

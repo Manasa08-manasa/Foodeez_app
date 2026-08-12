@@ -150,7 +150,13 @@ class EarningsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 10),
-            ...settlements.map((s) => _SettlementCard(settlement: s)),
+            if (settlements.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('No data found', style: AppText.body(size: 13, color: AppColors.bodyGrey)),
+              )
+            else
+              ...settlements.map((s) => _SettlementCard(settlement: s)),
             const SizedBox(height: 20),
             Text('Download reports', style: AppText.display(size: 15)),
             const SizedBox(height: 10),

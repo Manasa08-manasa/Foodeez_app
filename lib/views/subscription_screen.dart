@@ -22,7 +22,10 @@ class SubscriptionScreen extends ConsumerWidget {
     final into = curTier >= 10 ? 10 : ordersCtrl.doneToday % 10;
     final pct = curTier >= 10 ? 1.0 : into / 10;
     final nextNote = curTier < 10 ? '${10 - into} more orders → Tier ${curTier + 1} · ${moneyFmt(tierFees[curTier])}/day' : 'Top tier — capped at ${moneyFmt(999)}/day';
-    final history = [...subscriptionDayHistory, (day: 'Today', orders: ordersCtrl.doneToday)];
+    // If backend is not integrated, we don't show seeded/mock history.
+    final history = earningsCtrl.usingApi
+        ? [(day: 'Today', orders: ordersCtrl.doneToday)]
+        : const [];
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -84,9 +87,13 @@ class SubscriptionScreen extends ConsumerWidget {
             const SizedBox(height: 10),
             SizedBox(
               height: 132,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: history.map((h) {
+              child: history.isEmpty
+                  ? Center(
+                      child: Text('No data found', style: AppText.body(size: 13, color: AppColors.bodyGrey)),
+                    )
+                  : ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: history.map((h) {
                   final t = tierOf(h.orders);
                   final today = h.day == 'Today';
                   return Container(
@@ -103,8 +110,8 @@ class SubscriptionScreen extends ConsumerWidget {
                       ],
                     ),
                   );
-                }).toList(),
-              ),
+                      }).toList(),
+                    ),
             ),
             const SizedBox(height: 20),
             Text('Daily subscription tiers', style: AppText.body(size: 14, weight: FontWeight.w800)),

@@ -7,7 +7,10 @@ class OrderStatusUtils {
   static const ready = {'READY', 'READY_FOR_PICKUP', 'PICKED_UP', 'ON_THE_WAY'};
   static const completed = {'DELIVERED', 'COMPLETED', 'CANCELLED', 'REJECTED', 'FAILED'};
 
-  static const homeLive = {'PLACED', 'CONFIRMED', 'PREPARING', 'READY_FOR_PICKUP'};
+  // Dashboard Home: show pre-ready states only.
+  // Once an order becomes READY/READY_FOR_PICKUP, it should move to the
+  // Orders screen (out for delivery).
+  static const homeLive = {'PLACED', 'CONFIRMED', 'ACCEPTED', 'PREPARING'};
 
   static String norm(String? status) => status?.toUpperCase().trim() ?? '';
 
@@ -19,6 +22,7 @@ class OrderStatusUtils {
   static bool isAccepted(String? status) => norm(status) == 'ACCEPTED';
   static bool isHomeLive(String? status) => homeLive.contains(norm(status));
   static bool canPartnerMarkReady(String? status) => isAccepted(status);
+  static bool isRejected(String? status) => norm(status) == 'REJECTED';
 
   /// Prefer the more advanced status when the same order appears in multiple API pools.
   static int rank(String? status) => switch (norm(status)) {

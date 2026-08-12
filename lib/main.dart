@@ -102,7 +102,20 @@ class AppShell extends ConsumerWidget {
       );
     }
 
-    final screen = _screens[nav.screen] ?? const DashboardScreen();
+    final navCtrl = ref.read(navigationControllerProvider);
+    navCtrl.syncAuthSession(auth.isAuthenticated);
+
+    final needsLogin =
+        !auth.isAuthenticated && !NavigationController.isPublicScreen(nav.screen);
+    if (needsLogin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ref.read(authControllerProvider).isAuthenticated) return;
+        ref.read(navigationControllerProvider).tab('login');
+      });
+    }
+
+    final screenKey = needsLogin ? 'login' : nav.screen;
+    final screen = _screens[screenKey] ?? const LoginScreen();
 
     return PopScope(
       canPop: false,

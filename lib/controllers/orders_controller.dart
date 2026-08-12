@@ -411,21 +411,14 @@ class OrdersController extends ChangeNotifier {
     return null;
   }
 
-  bool _isToday(String uiId) {
-    final dt = _createdAt[uiId];
-    if (dt == null) return true;
-    final now = DateTime.now();
-    final local = dt.toLocal();
-    return local.year == now.year && local.month == now.month && local.day == now.day;
-  }
-
   List<Order> get liveOrders => homeLiveOrders;
 
   int get newCount => orders.where((o) => OrderStatusUtils.isPlaced(_apiStatuses[o.id])).length;
   int get prepCount => orders.where((o) => OrderStatusUtils.isPreparing(_apiStatuses[o.id])).length;
   int get readyCount => orders.where((o) => OrderStatusUtils.isReady(_apiStatuses[o.id])).length;
   int get completedCount =>
-      orders.where((o) => OrderStatusUtils.isCompleted(_apiStatuses[o.id]) && _isToday(o.id)).length;
+      orders.where((o) => OrderStatusUtils.isCompleted(_apiStatuses[o.id]) && !OrderStatusUtils.isRejected(_apiStatuses[o.id])).length;
+  int get rejectedCount => orders.where((o) => OrderStatusUtils.isRejected(_apiStatuses[o.id])).length;
   int get todayOrdersCount => orders.where((o) => !OrderStatusUtils.isPlaced(_apiStatuses[o.id])).length;
 
   List<Order> tabOrders(String tab) {
@@ -435,7 +428,10 @@ class OrdersController extends ChangeNotifier {
         'new' => OrderStatusUtils.isPlaced(raw),
         'preparing' => OrderStatusUtils.isPreparing(raw),
         'outForDelivery' => OrderStatusUtils.isReady(raw),
-        'completed' => OrderStatusUtils.isCompleted(raw) && _isToday(o.id),
+        'rejected' => OrderStatusUtils.isRejected(raw),
+
+        // Completed pool includes delivered + cancelled/etc (but NOT rejected).
+        'completed' => OrderStatusUtils.isCompleted(raw) && !OrderStatusUtils.isRejected(raw),
         _ => OrderStatusUtils.isOngoing(raw),
       };
     }

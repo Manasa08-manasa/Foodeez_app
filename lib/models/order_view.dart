@@ -51,7 +51,9 @@ class OrderView {
     final raw = OrderStatusUtils.norm(apiStatus);
     return OrderView._(
       order: o,
-      statusLabel: o.status == OrderStatus.completed ? completedLabel : (label ?? meta.label),
+      // For completed orders, prefer the real API label (REJECTED, DELIVERED, etc.)
+      // instead of the generic "delivered/sserved/picked up" label.
+      statusLabel: o.status == OrderStatus.completed ? (label ?? completedLabel) : (label ?? meta.label),
       statusFg: meta.fg,
       statusBg: meta.bg,
       actionLabel: act?.label ?? '',

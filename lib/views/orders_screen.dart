@@ -16,8 +16,8 @@ class OrdersScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
-  static const _tabs = ['new', 'preparing', 'outForDelivery', 'completed'];
-  static const _tabLabels = ['New', 'Preparing', 'Out for delivery', 'Completed'];
+  static const _tabs = ['new', 'preparing', 'outForDelivery', 'completed', 'rejected'];
+  static const _tabLabels = ['New', 'Preparing', 'Out for delivery', 'Completed', 'Rejected'];
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           ),
           ScrollableTabPills(
             labels: _tabLabels,
-            counts: [orders.newCount, orders.prepCount, orders.readyCount, orders.completedCount],
+            counts: [orders.newCount, orders.prepCount, orders.readyCount, orders.completedCount, orders.rejectedCount],
             selectedIndex: selectedTabIx < 0 ? 0 : selectedTabIx,
             onSelect: (i) => orders.setOrdersTab(_tabs[i]),
           ),
@@ -81,6 +81,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                                     'preparing' => 'Accepted orders being prepared will show here.',
                                     'outForDelivery' => 'Orders marked ready or out with a rider will show here.',
                                     'completed' => 'Orders completed today will appear here.',
+                                  'rejected' => 'Rejected orders will appear here.',
                                     _ => 'Orders will show here.',
                                   },
                                   textAlign: TextAlign.center,
